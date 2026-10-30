@@ -1,0 +1,218 @@
+/* ============================================================
+   layout.css — Shell de pantalla, status bar, navbar, scroll
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Fondo del "escritorio": centra el teléfono en pantallas grandes.
+   En mobile, el .app ocupa todo el viewport.
+   ------------------------------------------------------------ */
+/* La app se ve SIEMPRE como un mockup de celular, centrado en un fondo. */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding: 20px;
+  background: var(--c-n300);
+}
+
+/* El wrapper de montaje nunca excede el viewport */
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--ancho-app);
+  height: var(--alto-app);
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--c-crema);
+  border: 11px solid var(--c-navy);
+  border-radius: 46px;
+  box-shadow: 0 30px 80px rgba(11, 13, 51, 0.32);
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   Status bar (hora + iconos del sistema)
+   ------------------------------------------------------------ */
+.status-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 var(--gutter);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-navy);
+  background: transparent;
+}
+.status-bar .hora { letter-spacing: 0.2px; }
+.status-bar .iconos { display: flex; align-items: center; gap: 6px; }
+.status-bar svg { width: 18px; height: 18px; }
+
+/* El acento de etapa tiñe la status bar cuando el header es de color */
+.app[data-header="color"] .status-bar { color: var(--etapa-texto, var(--c-navy)); }
+
+/* ------------------------------------------------------------
+   Header de pantalla (flecha atrás + título)
+   ------------------------------------------------------------ */
+.app-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--gutter) 12px;
+  min-height: 48px;
+}
+.app-header .btn-atras {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  border-radius: 50%;
+  color: var(--c-navy);
+}
+.app-header .btn-atras:active { background: rgba(11, 13, 51, 0.06); }
+.app-header .btn-atras svg { width: 24px; height: 24px; }
+.app-header .titulo-header {
+  font-family: var(--font-texto);
+  font-weight: 600;
+  font-size: 17px;
+}
+.app-header .accion-header { margin-left: auto; }
+
+/* Header de dashboard: saludo grande + campana */
+.app-header.header-dash {
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+.header-dash .dash-titulos { flex: 1 1 auto; min-width: 0; }
+.header-dash .dash-sub { margin-top: 4px; }
+.header-dash .btn-campana {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+  box-shadow: var(--sombra-card);
+}
+.header-dash .btn-campana svg { width: 22px; height: 22px; }
+.header-dash .punto-noti {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-coral);
+}
+
+/* ------------------------------------------------------------
+   Main — SIEMPRE scrollea (regla 4)
+   ------------------------------------------------------------ */
+.app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--gutter) var(--gutter);
+  scrollbar-width: thin;
+}
+.app-main::-webkit-scrollbar { width: 0; }
+
+/* ------------------------------------------------------------
+   Barra de CTA al pie — en el flujo, siempre por encima del navbar.
+   Es la única franja que se fija (regla 3 de mobile first).
+   ------------------------------------------------------------ */
+.cta-bar {
+  flex: 0 0 auto;
+  padding: 14px var(--gutter);
+  background: var(--c-crema);
+  box-shadow: 0 -8px 20px -12px rgba(11, 13, 51, 0.18);
+  z-index: 5;
+}
+/* Sin navbar (onboarding/celebración), respeta el safe-area inferior */
+.app[data-nav="false"] .cta-bar {
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ------------------------------------------------------------
+   Navbar — NUNCA desaparece (regla 1), salvo onboarding/celebración
+   ------------------------------------------------------------ */
+.navbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-navbar);
+  z-index: 6;
+}
+.navbar .nav-item {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--tap-min);
+  padding: 6px 2px;
+  border-radius: 12px;
+  color: var(--c-n500);
+}
+.navbar .nav-item svg { width: 24px; height: 24px; }
+.navbar .nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+.navbar .nav-item[aria-current="page"] {
+  color: var(--nav-activo, var(--c-navy));
+}
+.navbar .nav-item[aria-current="page"] svg {
+  stroke-width: 2.4;
+}
+/* Color del tab activo por etapa (el navbar es blanco siempre) */
+.etapa-cbc      { --nav-activo: var(--c-navy); }
+.etapa-carrera  { --nav-activo: var(--c-azul); }
+.etapa-posgrado { --nav-activo: var(--c-violeta); }
+
+/* Las pantallas sin navbar (onboarding y celebración) lo ocultan */
+.app[data-nav="false"] .navbar { display: none; }
+
+/* ------------------------------------------------------------
+   Hero de etapa (bloque de color arriba del dashboard)
+   ------------------------------------------------------------ */
+.hero-etapa {
+  position: relative;
+  margin: 0 0 20px;
+  padding: 24px;
+  border-radius: var(--r-hero);
+  background: var(--acento);
+  color: var(--c-navy);
+  overflow: hidden;
+}
+.etapa-carrera .hero-etapa,
+.etapa-posgrado .hero-etapa { color: var(--c-blanco); }

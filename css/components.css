@@ -1,0 +1,1165 @@
+/* ============================================================
+   components.css — Botones, chips, cards, filas, barras, árbol, agenda
+   Regla de color: color de ETAPA ≠ color de ESTADO (sección 4.3)
+   ============================================================ */
+
+/* ============================================================
+   1. FILA DE MATERIA  (el componente más repetido)
+   ============================================================ */
+.fila-materia {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r-fila);
+  background: var(--c-blanco);
+  color: var(--c-navy);
+  text-align: left;
+  box-shadow: var(--sombra-card);
+  transition: transform 0.12s ease;
+}
+.fila-materia:active { transform: scale(0.985); }
+
+.fila-materia .glifo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--c-n200);
+  color: var(--c-n600);
+}
+.fila-materia .glifo svg { width: 20px; height: 20px; }
+.fila-materia .info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fila-materia .nombre {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.25;
+}
+.fila-materia .metarow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fila-materia .meta {
+  font-size: 13px;
+  color: var(--c-n500);
+}
+.fila-materia .chevron { flex: 0 0 auto; color: var(--c-n400); }
+.fila-materia .chevron svg { width: 20px; height: 20px; }
+
+/* Materia atenuada (no es de la muestra o está bloqueada) */
+.fila-materia.atenuada {
+  opacity: 0.55;
+  box-shadow: none;
+  background: var(--c-n100);
+  pointer-events: none;
+}
+.fila-materia.bloqueada { box-shadow: none; background: var(--c-n100); }
+
+/* Pintado del glifo según estado — el color de estado va en el cuadrado + chip */
+.fila-materia[data-estado="inscripta"]  .glifo { background: var(--c-pastel-celeste); color: var(--c-navy); }
+.fila-materia[data-estado="cursando"]   .glifo { background: var(--c-naranja);        color: var(--c-navy); }
+.fila-materia[data-estado="aprobada"]    .glifo { background: var(--c-lima);           color: var(--c-navy); }
+.fila-materia[data-estado="desaprobada"] .glifo { background: var(--c-pastel-coral);   color: var(--c-coral); }
+.fila-materia[data-estado="libre"]       .glifo { background: var(--c-pastel-rosa);    color: var(--c-magenta); }
+
+.fila-materia[data-estado="aprobada"] {
+  background: var(--c-pastel-lima);
+}
+
+/* Glifo coloreado también cuando sólo el glifo lleva el estado (seminarios) */
+.glifo[data-estado="aprobada"]    { background: var(--c-lima);         color: var(--c-navy); }
+.glifo[data-estado="cursando"]    { background: var(--c-naranja);      color: var(--c-navy); }
+.glifo[data-estado="inscripta"]   { background: var(--c-pastel-celeste); color: var(--c-navy); }
+.glifo[data-estado="desaprobada"] { background: var(--c-pastel-coral); color: var(--c-coral); }
+
+/* ============================================================
+   2. CHIPS DE ESTADO Y ETIQUETAS
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--r-chip);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.chip svg { width: 13px; height: 13px; }
+
+.chip-no-inscripta { background: var(--c-n200);          color: var(--c-n600); }
+.chip-inscripta    { background: var(--c-pastel-celeste); color: var(--c-navy); }
+.chip-cursando     { background: var(--c-naranja);        color: var(--c-navy); }
+.chip-aprobada     { background: var(--c-lima);           color: var(--c-navy); }
+.chip-desaprobada  { background: var(--c-pastel-coral);   color: var(--c-coral); }
+.chip-libre        { background: var(--c-pastel-rosa);    color: var(--c-magenta); }
+
+.chip-dato { background: var(--c-pastel-lima); color: var(--c-navy); }
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+.chip-pronto {
+  background: rgba(11, 13, 51, 0.08);
+  color: var(--c-n600);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.chip-info {
+  background: var(--c-lavanda);
+  color: var(--c-violeta);
+  border: 1.5px solid var(--c-violeta);
+}
+
+/* ============================================================
+   3. BOTONES
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--alto-boton);
+  padding: 0 20px;
+  border-radius: var(--r-boton);
+  font-family: var(--font-texto);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.2;
+  transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn svg { width: 20px; height: 20px; }
+
+.btn-primario {
+  background: var(--c-navy);
+  color: var(--c-blanco);
+}
+.btn-etapa {
+  background: var(--acento);
+  color: var(--c-navy);
+}
+.etapa-carrera .btn-etapa,
+.etapa-posgrado .btn-etapa { color: var(--c-blanco); }
+
+.btn-secundario {
+  background: var(--c-blanco);
+  color: var(--c-navy);
+  border: 1.5px solid var(--c-n300);
+}
+.btn-fantasma {
+  background: transparent;
+  color: var(--c-navy);
+}
+.btn-peligro {
+  background: var(--c-pastel-coral);
+  color: var(--c-coral);
+}
+.btn-naranja {
+  background: var(--c-naranja);
+  color: var(--c-navy);
+}
+
+/* Botón desactivado (inscripción paso 2) */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  background: var(--c-n300);
+  color: var(--c-n500);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-chico {
+  width: auto;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+/* ============================================================
+   4. CARDS
+   ============================================================ */
+.card {
+  padding: 20px;
+  border-radius: var(--r-card);
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+}
+.card-plana {
+  padding: 20px;
+  border-radius: var(--r-card);
+  background: var(--c-blanco);
+}
+.card-oscura {
+  padding: 20px;
+  border-radius: var(--r-card);
+  background: var(--c-navy);
+  color: var(--c-blanco);
+}
+.card-acento {
+  padding: 20px;
+  border-radius: var(--r-card);
+  background: var(--acento-suave);
+  color: var(--c-navy);
+}
+.card-celeste { background: var(--c-pastel-celeste); color: var(--c-navy); }
+.card-lima    { background: var(--c-pastel-lima);    color: var(--c-navy); }
+
+/* Card-botón para abrir la selección de comisión/cátedra */
+.selector-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--r-fila);
+  background: var(--c-blanco);
+  border: 2px solid var(--c-navy);
+  text-align: left;
+}
+.selector-card .sel-icono {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--c-lima);
+  color: var(--c-navy);
+}
+.selector-card .sel-icono svg { width: 22px; height: 22px; }
+.selector-card .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.selector-card .chevron { flex: 0 0 auto; color: var(--c-n400); }
+.selector-card .chevron svg { width: 20px; height: 20px; }
+
+/* Card de etapa del hub de recorrido */
+.etapa-card {
+  display: block;
+  padding: 18px;
+  border-radius: var(--r-card);
+  background: var(--c-blanco);
+}
+.etapa-card.abierta { border: 2px solid var(--c-navy); }
+.etapa-card.cerrada { background: var(--c-n100); }
+.etapa-top { display: flex; align-items: center; gap: 14px; }
+.etapa-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--c-navy);
+}
+.etapa-num.bloq { background: var(--c-n200); color: var(--c-n400); }
+.etapa-num.bloq svg { width: 22px; height: 22px; }
+.etapa-card.cerrada .etapa-info { color: var(--c-n400); }
+.etapa-card.cerrada .etapa-info .muted { color: var(--c-n400); }
+.etapa-info { flex: 1 1 auto; min-width: 0; }
+.etapa-info .t-h3 { margin-bottom: 2px; }
+.etapa-estado { margin-top: 14px; padding-left: 62px; }
+.etapa-bloqueo { font-size: 13px; color: var(--c-n500); }
+.callout-lavanda { background: var(--c-lavanda); color: var(--c-navy); }
+
+/* Card con borde punteado: datos NO confirmados (sección 8) */
+.card-pendiente {
+  padding: 18px;
+  border-radius: var(--r-card);
+  background: transparent;
+  border: 2px dashed var(--c-n400);
+  color: var(--c-n600);
+}
+.card-pendiente .encabezado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--c-n700);
+  margin-bottom: 6px;
+}
+.card-pendiente svg { width: 18px; height: 18px; }
+
+/* ============================================================
+   5. ANILLO Y BARRA DE PROGRESO
+   ============================================================ */
+.anillo {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+}
+.anillo svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.anillo .pista { fill: none; stroke: rgba(11, 13, 51, 0.12); stroke-width: 10; }
+.anillo .avance {
+  fill: none;
+  stroke: var(--c-navy);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+.etapa-carrera .anillo .avance { stroke: var(--c-blanco); }
+.anillo .centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.anillo .centro .grande {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+}
+.anillo .centro .chico { font-size: 11px; font-weight: 600; opacity: 0.7; }
+
+/* Anillo de arco para el hero de la carrera */
+.anillo-arco { flex: 0 0 auto; width: 92px; height: 92px; }
+.anillo-arco svg { width: 100%; height: 100%; }
+.hero-row { display: flex; align-items: center; gap: 20px; }
+.hero-texto { display: flex; flex-direction: column; gap: 2px; line-height: 1.05; }
+.hero-divisor { border: 0; height: 1px; background: rgba(255, 255, 255, 0.25); margin: 18px 0 14px; }
+
+/* Selector de años (pills) */
+.selector-anios {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.pill-anio {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 56px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+  box-shadow: var(--sombra-card);
+}
+.pill-anio .pill-num { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.pill-anio.activo {
+  background: var(--c-navy);
+  color: var(--c-blanco);
+}
+.pill-anio.activo .pill-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--acento-anio);
+}
+.pill-anio.bloqueado {
+  background: var(--c-n200);
+  color: var(--c-n400);
+  box-shadow: none;
+}
+.pill-anio.bloqueado svg { width: 16px; height: 16px; }
+
+.barra {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--c-blanco);
+  overflow: hidden;
+}
+.barra .relleno {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--c-navy);
+  transition: width 0.6s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+/* ============================================================
+   6. FILAS SELECCIONABLES (comisión / cátedra) — inscripción
+   ============================================================ */
+.fila-opcion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r-fila);
+  background: var(--c-blanco);
+  border: 2px solid transparent;
+  text-align: left;
+  transition: border-color 0.12s ease, opacity 0.12s ease;
+}
+.fila-opcion .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fila-opcion .titulo { display: block; font-weight: 600; font-size: 16px; line-height: 1.25; }
+.fila-opcion .sub { display: block; font-size: 13px; color: var(--c-n500); }
+.fila-opcion .btn-info-catedra {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-n100);
+  color: var(--c-n500);
+}
+.fila-opcion .btn-info-catedra:active { background: var(--c-n200); }
+.fila-opcion .btn-info-catedra svg { width: 20px; height: 20px; }
+.fila-opcion .radio {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--c-n300);
+  color: transparent;
+}
+.fila-opcion .radio svg { width: 16px; height: 16px; }
+
+/* Seleccionada: borde de acento + check; las demás se atenúan */
+.fila-opcion[aria-pressed="true"] {
+  border-color: var(--c-navy);
+  background: var(--c-blanco);
+}
+.fila-opcion[aria-pressed="true"] .radio {
+  border-color: var(--c-navy);
+  background: var(--c-navy);
+  color: var(--c-blanco);
+}
+/* Cuando hay una elegida, el grupo marca a las no elegidas */
+.grupo-opciones.con-eleccion .fila-opcion:not([aria-pressed="true"]) {
+  opacity: 0.5;
+}
+
+/* ============================================================
+   7. ÁRBOL DE CORRELATIVIDADES
+   ============================================================ */
+.arbol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.arbol-nivel {
+  position: relative;
+  min-width: 0;
+  /* grid con minmax(0,1fr): la fila interna scrollea en vez de empujar el ancho */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.arbol-nivel .etiqueta-nivel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--c-n500);
+  margin-bottom: 10px;
+}
+.arbol-fila {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.arbol-fila::-webkit-scrollbar { display: none; }
+.nodo {
+  flex: 0 0 auto;
+  width: 140px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+  border: 2px solid transparent;
+}
+.nodo .n-codigo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+.nodo .n-nombre { font-size: 13px; color: var(--c-n600); margin-top: 4px; line-height: 1.3; }
+.nodo .chip { margin-top: 8px; }
+.nodo[data-estado="aprobada"]  { background: var(--c-pastel-lima); }
+.nodo[data-estado="cursando"]  { background: var(--c-pastel-durazno); }
+.nodo[data-estado="bloqueada"] { opacity: 0.5; }
+.nodo[data-estado="habilitada"] { border-color: var(--acento); }
+
+/* ============================================================
+   7b. ÁRBOL — grid por año con conectores (rediseño)
+   ============================================================ */
+.selector-anios.arbol-selector { overflow-x: auto; scrollbar-width: none; margin-bottom: 16px; }
+.selector-anios.arbol-selector::-webkit-scrollbar { display: none; }
+.pill-anio-arbol {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 18px;
+  gap: 6px;
+}
+.pill-anio-arbol.cerrado { background: var(--c-pastel-lima); color: var(--c-navy); }
+
+.arbol-panel {
+  padding: 24px 18px;
+  border-radius: var(--r-card);
+  background: var(--c-n100);
+}
+.arbol-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 10px;
+  row-gap: 30px;
+}
+.arbol-celda {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.arbol-nodo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 6px;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-navy);
+  text-align: center;
+}
+.arbol-nodo[data-estado="aprobada"]   { background: var(--c-lima); }
+.arbol-nodo[data-estado="cursando"]   { background: var(--c-naranja); }
+.arbol-nodo[data-estado="habilitada"] { background: var(--c-blanco); border: 2px solid var(--acento-anio); }
+.arbol-nodo[data-estado="bloqueada"]  { background: var(--c-n100); color: var(--c-n400); border: 2px dashed var(--c-n300); }
+/* Conector vertical hacia el nodo de abajo */
+.arbol-nodo[data-conecta="1"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 30px;
+  background: var(--c-n300);
+  z-index: -1;
+}
+
+.arbol-leyenda {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--c-n600);
+}
+.arbol-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.punto-leyenda { width: 14px; height: 14px; border-radius: 5px; }
+.punto-leyenda.ap { background: var(--c-lima); }
+.punto-leyenda.ha { background: var(--c-blanco); border: 2px solid var(--acento-anio); }
+.punto-leyenda.bl { background: var(--c-n100); border: 2px dashed var(--c-n300); }
+
+.callout-anio { background: var(--acento-suave); color: var(--c-navy); }
+
+/* ============================================================
+   7c. PLAN — categorías con barra (rediseño)
+   ============================================================ */
+.plan-cat {
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+}
+.plan-cat-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.plan-cat .barra { background: var(--c-n200); height: 8px; }
+.plan-cat .barra .relleno { background: var(--c-azul); }
+
+/* ============================================================
+   8. AGENDA
+   ============================================================ */
+/* Cabecera de sección (título grande + subtítulo) */
+.app-header.cabecera-seccion {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding-top: 8px;
+  padding-bottom: 12px;
+}
+.agenda-mes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 14px;
+}
+.agenda-flechas { display: flex; gap: 4px; color: var(--c-n500); }
+.agenda-flechas svg { width: 22px; height: 22px; }
+.semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.dia-sem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0;
+  border-radius: 14px;
+  background: var(--c-n100);
+}
+.dia-sem .dia-letra { font-size: 11px; font-weight: 600; color: var(--c-n500); }
+.dia-sem .dia-num { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.dia-sem.on { background: var(--acento-anio); color: var(--c-blanco); }
+.dia-sem.on .dia-letra { color: rgba(255, 255, 255, 0.85); }
+/* 3º año (amarillo): texto navy para contraste */
+.anio-3 .dia-sem.on,
+.anio-3 .dia-sem.on .dia-letra { color: var(--c-navy); }
+
+.evento {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+}
+.evento.destacado { border: 2px solid var(--acento-anio); box-shadow: none; }
+.evento-fecha {
+  flex: 0 0 auto;
+  width: 60px;
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--acento-suave);
+  color: var(--c-navy);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.evento.destacado .evento-fecha { background: var(--acento-anio); color: var(--c-blanco); }
+.anio-3 .evento.destacado .evento-fecha { color: var(--c-navy); }
+.evento-info { flex: 1 1 auto; min-width: 0; }
+
+/* ============================================================
+   8b. AGENDA (legacy)
+   ============================================================ */
+.agenda-dia {
+  display: flex;
+  gap: 14px;
+  padding: 2px 0;
+}
+.agenda-dia .fecha {
+  flex: 0 0 56px;
+  text-align: center;
+}
+.agenda-dia .fecha .dia {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+}
+.agenda-dia .fecha .mes {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--c-n500);
+}
+.agenda-evento {
+  flex: 1 1 auto;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+  border-left: 4px solid var(--acento);
+  margin-bottom: 12px;
+}
+.agenda-evento .cuando { font-size: 13px; color: var(--c-n500); margin-top: 2px; }
+.agenda-evento.tipo-inscripcion { border-left-color: var(--c-celeste); }
+.agenda-evento.tipo-parcial     { border-left-color: var(--c-naranja); }
+.agenda-evento.tipo-final       { border-left-color: var(--c-coral); }
+.agenda-evento.tipo-inicio      { border-left-color: var(--c-lima); }
+
+/* ============================================================
+   9. PERFIL — avatar con iniciales
+   ============================================================ */
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--c-navy);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+}
+.etapa-carrera .avatar,
+.etapa-posgrado .avatar { color: var(--c-blanco); }
+.avatar-chico {
+  width: 40px; height: 40px; font-size: 15px;
+}
+
+/* ============================================================
+   10. SECCIONES Y ENCABEZADOS DE LISTA
+   ============================================================ */
+.seccion-titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+.seccion-titulo h2 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.seccion-titulo .conteo { font-size: 13px; color: var(--c-n500); font-weight: 600; }
+
+.lista-materias {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Divisor */
+.divisor { height: 1px; background: var(--c-n200); margin: 16px 0; border: 0; }
+
+/* Dato (clave/valor) */
+.dato { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; }
+.dato + .dato { border-top: 1px solid var(--c-n200); }
+.dato .k { color: var(--c-n500); font-size: 14px; }
+.dato .v { font-weight: 600; font-size: 14px; text-align: right; }
+
+/* ============================================================
+   11. BANDA DE AVISO / CALLOUT
+   ============================================================ */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--acento-suave);
+  color: var(--c-navy);
+}
+.callout svg { flex: 0 0 auto; width: 22px; height: 22px; margin-top: 1px; }
+.callout .texto { font-size: 14px; line-height: 1.45; }
+.callout .texto strong { font-weight: 600; }
+.callout-celeste { background: var(--c-pastel-celeste); color: var(--c-navy); }
+.callout-celeste svg { color: var(--c-celeste); }
+.callout-lima { background: var(--c-pastel-lima); color: var(--c-navy); }
+.callout-rosa { background: var(--c-pastel-rosa); color: var(--c-navy); }
+
+/* ============================================================
+   12. HOJA INFERIOR (bottom sheet) — A7b, info de facultad
+   ============================================================ */
+.hoja-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 13, 51, 0.4);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.hoja-overlay.abierta { opacity: 1; pointer-events: auto; }
+.hoja {
+  width: 100%;
+  max-height: 85%;
+  overflow-y: auto;
+  padding: 10px var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+  background: var(--c-crema);
+  border-radius: 24px 24px 0 0;
+  transform: translateY(100%);
+  transition: transform 0.26s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+.hoja-overlay.abierta .hoja { transform: translateY(0); }
+.hoja .asa {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--c-n300);
+  margin: 6px auto 16px;
+}
+
+/* ============================================================
+   13b. ONBOARDING
+   ============================================================ */
+/* Splash — logo sobre azul institucional */
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--c-azul);
+  animation: splash-in 0.5s ease;
+}
+.splash-logo { width: 116px; height: 116px; }
+.splash-tagline { color: var(--c-blanco); opacity: 0.85; font-size: 15px; font-weight: 500; }
+@keyframes splash-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Barra superior: dots de progreso + Saltar */
+.app-header.onboarding-top {
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  padding-bottom: 16px;
+}
+.onboarding-top .dots { display: flex; align-items: center; gap: 7px; }
+.onboarding-top .dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: var(--c-n300);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.onboarding-top .dot.on { width: 26px; background: var(--c-navy); }
+.onboarding-top .saltar {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-n600);
+  padding: 8px 4px;
+}
+
+/* Ilustración del onboarding */
+.onb-ilustracion {
+  margin: 0 0 28px;
+  padding: 18px;
+  border-radius: var(--r-hero);
+  background: var(--c-blanco);
+  display: flex;
+  justify-content: center;
+}
+.onb-ilustracion img { width: 100%; max-width: 320px; height: auto; }
+
+/* Tags de afinidad (multi-select, flujo libre) */
+.tags { display: flex; flex-wrap: wrap; gap: 10px; }
+.tag {
+  padding: 12px 18px;
+  border-radius: var(--r-chip);
+  background: var(--c-blanco);
+  border: 1.5px solid var(--c-n300);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-navy);
+  transition: transform 0.1s ease;
+}
+.tag:active { transform: scale(0.96); }
+.tag[aria-pressed="true"] { border-color: transparent; font-weight: 600; }
+.tag[data-color="lima"]    { background: var(--c-lima); }
+.tag[data-color="naranja"] { background: var(--c-naranja); }
+.tag[data-color="lavanda"] { background: var(--c-lavanda); }
+.tag[data-color="celeste"] { background: var(--c-pastel-celeste); }
+.tag[data-color="amarillo"]{ background: var(--c-pastel-amarillo); }
+.tag[data-color="rosa"]    { background: var(--c-pastel-rosa); }
+
+/* Carreras sugeridas (A4) */
+.carrera-sugerida {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--r-fila);
+  background: var(--c-blanco);
+  box-shadow: var(--sombra-card);
+}
+.carrera-sugerida .punto-color {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+}
+.carrera-sugerida .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.carrera-sugerida .chevron { flex: 0 0 auto; color: var(--c-n400); }
+.carrera-sugerida .chevron svg { width: 20px; height: 20px; }
+
+/* Jerga (A5) */
+.jerga-top { display: flex; align-items: center; gap: 12px; }
+.jerga-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-navy);
+}
+
+/* Campos de formulario (A6) */
+.campo { display: flex; flex-direction: column; gap: 8px; }
+.input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border-radius: var(--r-boton);
+  border: 1.5px solid var(--c-n300);
+  font-family: var(--font-texto);
+  font-size: 16px;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+}
+.input::placeholder { color: var(--c-n400); }
+.input:focus { border-color: var(--c-navy); outline: none; }
+
+/* Buscador (A7) */
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  min-height: 54px;
+  border-radius: var(--r-chip);
+  background: var(--c-blanco);
+  border: 1.5px solid var(--c-n300);
+  color: var(--c-n500);
+}
+.buscador svg { flex: 0 0 auto; width: 20px; height: 20px; }
+.buscador input {
+  flex: 1 1 auto;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--c-navy);
+}
+.buscador input:focus { outline: none; }
+
+/* Fila-opción seleccionada / inerte (A7, A8) */
+.fila-opcion.activa { border-color: var(--c-navy); }
+.fila-opcion.activa.fac-sel { background: var(--c-pastel-celeste); }
+.fila-opcion.inerte { pointer-events: none; }
+.fila-opcion .radio.check {
+  border-color: var(--c-navy);
+  background: var(--c-navy);
+  color: var(--c-blanco);
+}
+.fila-opcion .chevron { flex: 0 0 auto; color: var(--c-n400); }
+.fila-opcion .chevron svg { width: 20px; height: 20px; }
+
+/* ============================================================
+   12b. NOTIFICACIÓN DE APROBADA
+   ============================================================ */
+.aprobada-noti {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: var(--r-card);
+  background: var(--c-pastel-lima);
+  color: var(--c-navy);
+}
+.aprobada-noti .noti-check {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--c-lima);
+  color: var(--c-navy);
+}
+.aprobada-noti .noti-check svg { width: 24px; height: 24px; }
+
+/* ============================================================
+   12c. POSGRADO
+   ============================================================ */
+/* Link cards de colores (contacto / mi cursada) */
+.pg-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--r-fila);
+  color: var(--c-navy);
+}
+.pg-link .pg-link-ic {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--c-violeta);
+}
+.pg-link .pg-link-ic svg { width: 22px; height: 22px; }
+.pg-link .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pg-link .chevron { flex: 0 0 auto; color: var(--c-n500); }
+.pg-link .chevron svg { width: 20px; height: 20px; }
+
+/* Subcard blanca dentro de la card violeta (aranceles) */
+.pg-subcard {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+}
+
+/* Card de bonificación (lima + check) */
+.pg-bono {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--c-pastel-lima);
+  color: var(--c-navy);
+}
+.pg-bono .pg-bono-check {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+}
+.pg-bono .pg-bono-check svg { width: 18px; height: 18px; }
+.pg-bono .info { flex: 1 1 auto; min-width: 0; }
+
+/* Item numerado (pasos / documentación) */
+.paso-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--c-blanco);
+  border: 1.5px solid var(--c-n200);
+}
+.paso-item .paso-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--c-navy);
+  font-weight: 700;
+  font-size: 14px;
+}
+.paso-item .info { flex: 1 1 auto; min-width: 0; padding-top: 2px; }
+
+/* ============================================================
+   13. HITO — pantalla completa de transición animada
+   ============================================================ */
+.hito-pantalla {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.hito-pantalla.entra { opacity: 1; }
+.hito-pantalla.texto-navo { color: var(--c-navy); }
+.hito-pantalla.texto-navy { color: var(--c-navy); }
+.hito-pantalla.texto-blanco { color: var(--c-blanco); }
+
+.hito-contenido {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 var(--gutter);
+  overflow-y: auto;
+}
+.hito-icono {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  margin-bottom: 22px;
+  transform: scale(0.5);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.1s, opacity 0.4s ease 0.1s;
+}
+.hito-icono svg { width: 36px; height: 36px; }
+.hito-pantalla.entra .hito-icono { transform: scale(1); opacity: 1; }
+
+.hito-titulo, .hito-sub, .hito-card {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.hito-pantalla.entra .hito-titulo { opacity: 1; transform: none; transition-delay: 0.16s; }
+.hito-sub { margin-top: 14px; max-width: 340px; opacity: 0.9; }
+.hito-pantalla.texto-navy .hito-sub { opacity: 0.75; }
+.hito-pantalla.entra .hito-sub { opacity: 0.9; transform: none; transition-delay: 0.26s; }
+.hito-pantalla.entra.texto-navy .hito-sub { opacity: 0.75; }
+.hito-pantalla.entra .hito-card { opacity: 1; transform: none; transition-delay: 0.38s; }
+
+.hito-card {
+  margin-top: 26px;
+  padding: 18px;
+  border-radius: var(--r-card);
+  background: var(--c-blanco);
+  color: var(--c-navy);
+  box-shadow: var(--sombra-flote);
+}
+.hito-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hito-card .barra { background: var(--c-n200); height: 12px; }
+.hito-card .barra .relleno { background: var(--c-azul); }
+
+.hito-card-etapa { display: flex; align-items: center; gap: 14px; }
+.hito-etapa-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--c-navy);
+  color: var(--c-blanco);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.hito-pantalla .cta-bar { background: transparent; box-shadow: none; }
+
+/* ============================================================
+   13c. CELEBRACIÓN — pantalla completa de hito (legacy)
+   ============================================================ */
+.celebracion {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--gutter);
+  background: var(--acento);
+  color: var(--c-navy);
+  z-index: 15;
+}
+.etapa-carrera .celebracion { color: var(--c-blanco); }
+.celebracion .emoji { font-size: 64px; margin-bottom: 16px; }
+.celebracion .cta-bar {
+  background: none;
+  box-shadow: none;
+  width: 100%;
+  margin-top: 32px;
+}

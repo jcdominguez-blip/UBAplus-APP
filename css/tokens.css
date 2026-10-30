@@ -1,0 +1,115 @@
+/* ============================================================
+   tokens.css — Variables de diseño de la UBA App
+   Paleta, tipografía, espaciado y radios (sección 4 del contexto)
+   ============================================================ */
+
+:root {
+  /* ---- Marca ---- */
+  --c-azul:   #2949F5;   /* color de la carrera */
+  --c-navy:   #0B0D33;
+  --c-crema:  #F7F5EF;
+  --c-blanco: #FFFFFF;
+
+  /* ---- Acentos ---- */
+  --c-lima:     #D8F36A;  /* color del CBC y de "aprobada" */
+  --c-naranja:  #FFB66D;  /* cursando */
+  --c-lavanda:  #DCD4FF;
+  --c-celeste:  #3FBCDC;  /* acento de 1º año */
+  --c-violeta:  #6B4EF0;  /* acento de 2º año */
+  --c-amarillo: #FFC53D;  /* acento de 3º año */
+  --c-coral:    #F2593C;  /* acento de 4º año y desaprobada */
+  --c-magenta:  #E8266F;  /* libre */
+
+  /* ---- Pasteles ---- */
+  --c-pastel-celeste:  #C2E9F4;
+  --c-pastel-amarillo: #FFEFC2;
+  --c-pastel-coral:    #FFD5C7;
+  --c-pastel-rosa:     #FBD2E0;
+  --c-pastel-lima:     #EEF8C6;
+  --c-pastel-durazno:  #FFE2C6;
+
+  /* ---- Neutros ---- */
+  --c-n900: #0B0D33;
+  --c-n800: #1E2148;
+  --c-n700: #33365C;
+  --c-n600: #4A4D6B;
+  --c-n500: #7E8099;
+  --c-n400: #A9AABD;
+  --c-n300: #D9D7E3;
+  --c-n200: #EDEDF2;
+  --c-n100: #F5F5F8;
+
+  /* ---- Acento de etapa/año (se reescribe por pantalla) ---- */
+  --acento: var(--c-azul);
+  --acento-suave: var(--c-lavanda);
+
+  /* ---- Tipografía ---- */
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-texto:   "Inter", system-ui, sans-serif;
+
+  /* ---- Espaciado y medidas ---- */
+  --gutter: 24px;
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+  --sp-40: 40px;
+  --sp-48: 48px;
+
+  /* ---- Radios ---- */
+  --r-chip:  999px;
+  --r-boton: 14px;
+  --r-fila:  18px;
+  --r-card:  20px;
+  --r-hero:  24px;
+
+  /* ---- Áreas táctiles ---- */
+  --tap-min: 48px;
+  --alto-boton: 54px;
+
+  /* ---- Sombras ---- */
+  --sombra-card: 0 2px 12px rgba(11, 13, 51, 0.06);
+  --sombra-flote: 0 6px 24px rgba(11, 13, 51, 0.12);
+  --sombra-navbar: 0 -2px 16px rgba(11, 13, 51, 0.08);
+
+  /* ---- Shell del dispositivo ---- */
+  --ancho-app: 390px;
+  --alto-app:  844px;
+}
+
+/* ------------------------------------------------------------
+   Acentos de etapa — clases que se ponen en <body>
+   El color de etapa dice DÓNDE estás en el recorrido.
+   ------------------------------------------------------------ */
+.etapa-cbc {
+  --etapa: var(--c-lima);
+  --etapa-texto: var(--c-navy);
+  --acento: var(--c-lima);
+  --acento-suave: var(--c-pastel-lima);
+}
+.etapa-carrera {
+  --etapa: var(--c-azul);
+  --etapa-texto: var(--c-blanco);
+  --acento: var(--c-azul);
+  --acento-suave: var(--c-lavanda);
+  --acento-anio: var(--c-azul);       /* acento del año (se reescribe por .anio-N) */
+}
+.etapa-posgrado {
+  --etapa: var(--c-violeta);
+  --etapa-texto: var(--c-blanco);
+  --acento: var(--c-violeta);
+  --acento-suave: var(--c-lavanda);
+  --acento-anio: var(--c-violeta);
+}
+
+/* Acentos por año de la carrera: el color de etapa sigue siendo azul,
+   el año aporta su propio acento (--acento-anio) para elementos secundarios. */
+.anio-1 { --acento-anio: var(--c-celeste);  --acento-suave: var(--c-pastel-celeste); }
+.anio-2 { --acento-anio: var(--c-violeta);  --acento-suave: var(--c-lavanda); }
+.anio-3 { --acento-anio: var(--c-amarillo); --acento-suave: var(--c-pastel-amarillo); }
+.anio-4 { --acento-anio: var(--c-coral);    --acento-suave: var(--c-pastel-coral); }

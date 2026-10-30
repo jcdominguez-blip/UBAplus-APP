@@ -1,0 +1,1658 @@
+/* ============================================================
+   app.js — Arranque y lógica por página
+   Enrutamiento simple por <body data-page="…">. Usa DATA, ESTADO, UI.
+   ============================================================ */
+(function () {
+  "use strict";
+
+  var D = window.DATA, E = window.ESTADO, U = window.UI;
+
+  /* ---------------- Helpers ---------------- */
+  function qs(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+  function go(href) { window.location.href = href; }
+  function el(id) { return document.getElementById(id); }
+  var APP = function () { return el("app"); };
+  /* Host de overlays: el .app (position:relative), para cubrir sólo el teléfono */
+  function overlayHost() { return document.querySelector(".app") || APP(); }
+
+  /* Aplica la clase de etapa/año al <body> para que --acento se reescriba */
+  function pintarEtapa(etapa, anio) {
+    var b = document.body;
+    b.classList.remove("etapa-cbc", "etapa-carrera", "etapa-posgrado",
+                       "anio-1", "anio-2", "anio-3", "anio-4");
+    if (etapa === "cbc") b.classList.add("etapa-cbc");
+    else if (etapa === "graduado") b.classList.add("etapa-carrera");
+    else if (etapa === "posgrado") b.classList.add("etapa-posgrado");
+    else { b.classList.add("etapa-carrera"); if (anio) b.classList.add("anio-" + anio); }
+  }
+
+  /* ============================================================
+     PÁGINA: Onboarding (index.html)
+     Splash → bienvenida → interés → FADU → jerga → registro →
+     facultad → carrera. Un stepper simple en una sola página.
+     ============================================================ */
+  function pageOnboarding() {
+    pintarEtapa("cbc");
+    var paso = 0;
+    var pasos = [splash, bienvenida, interes, interesFadu, jerga, registro, facultad, carrera];
+
+    function avanzar() { paso++; if (paso < pasos.length) pasos[paso](); }
+
+    function montar(cfg) {
+      cfg.nav = null;
+      U.montarApp(APP(), cfg);
+    }
+
+    /* Barra superior de las 4 pantallas con dots + Saltar */
+    function topDots(idx) {
+      var dots = "";
+      for (var i = 0; i < 4; i++) dots += '<span class="dot' + (i === idx ? " on" : "") + '"></span>';
+      return '<header class="app-header onboarding-top">' +
+        '<div class="dots">' + dots + "</div>" +
+        '<button class="saltar" type="button" data-saltar>Saltar</button></header>';
+    }
+    function cablearSaltar() {
+      var b = document.querySelector("[data-saltar]");
+      if (b) b.onclick = function () { paso = 5; pasos[paso](); }; // salta a registro
+    }
+
+    function splash() {
+      montar({
+        main:
+          '<div class="splash">' +
+          '<img src="img/LOGO-ACRO-INV.svg" alt="UBA+" class="splash-logo">' +
+          '<div class="splash-tagline">Tu recorrido universitario</div>' +
+          "</div>"
+      });
+      setTimeout(avanzar, 1800);
+    }
+
+    function bienvenida() {
+      montar({
+        header: topDots(0),
+        main:
+          '<figure class="onb-ilustracion"><img src="img/ilustracion.png" alt="" width="330" height="220"></figure>' +
+          '<h1 class="t-display-l" style="margin-bottom:16px">Saliste del secundario. Y ahora, ¿qué?</h1>' +
+          '<p class="t-base muted">La UBA tiene 13 facultades y más de cien carreras, y nadie te explicó cómo ' +
+          "funciona ninguna. Esta app te acompaña desde el primer día del CBC hasta el día que retirás tu título.</p>",
+        cta:
+          '<button class="btn btn-etapa" id="cta">Dale, empecemos</button>' +
+          '<p class="t-caption muted center" style="margin-top:10px">Son cuatro pantallas. Te lleva un minuto.</p>'
+      });
+      el("cta").onclick = avanzar;
+      cablearSaltar();
+    }
+
+    function interes() {
+      var afinidades = [
+        "Películas y series", "Dibujo y arte", "Construcciones", "Computadoras",
+        "Animales", "Salud", "Números", "Leer y escribir", "Naturaleza",
+        "Gente y sociedad", "Armar cosas"
+      ];
+      // Paleta que se asigna a los tags elegidos, en orden
+      var paleta = ["lima", "naranja", "lavanda", "celeste", "amarillo", "rosa"];
+      montar({
+        header: topDots(1),
+        main:
+          '<h1 class="t-h1">¿Qué cosas te gustan?</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 20px">Elegí las que vayan con vos. ' +
+          "No es un test vocacional: es un punto de partida.</p>" +
+          '<div class="tags" id="tags">' +
+          afinidades.map(function (a, i) {
+            return '<button class="tag" type="button" aria-pressed="false" data-i="' + i + '">' + U.esc(a) + "</button>";
+          }).join("") +
+          "</div>",
+        cta: '<button class="btn btn-etapa" id="cta" disabled aria-disabled="true">Ver qué me puede gustar</button>'
+      });
+
+      var seleccionados = [];
+      var tags = el("tags");
+      tags.querySelectorAll(".tag").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var i = b.getAttribute("data-i");
+          var pos = seleccionados.indexOf(i);
+          if (pos >= 0) {
+            seleccionados.splice(pos, 1);
+            b.setAttribute("aria-pressed", "false");
+            b.removeAttribute("data-color");
+          } else {
+            seleccionados.push(i);
+            b.setAttribute("aria-pressed", "true");
+            b.setAttribute("data-color", paleta[(seleccionados.length - 1) % paleta.length]);
+          }
+          var c = el("cta");
+          var hay = seleccionados.length > 0;
+          c.disabled = !hay;
+          c.setAttribute("aria-disabled", hay ? "false" : "true");
+        });
+      });
+      el("cta").onclick = avanzar;
+      cablearSaltar();
+    }
+
+    function interesFadu() {
+      var cierres = [
+        { color: "--c-lima",    nombre: "Diseño Gráfico", sub: "Marcas, tipografía, editorial, packaging" },
+        { color: "--c-naranja", nombre: "Diseño de Imagen y Sonido", sub: "Cine, sonido, montaje, audiovisual" },
+        { color: "--c-lavanda", nombre: "Arquitectura", sub: "Espacios, obra, ciudad" }
+      ];
+      montar({
+        header: topDots(2),
+        main:
+          '<h1 class="t-h1">Te puede interesar FADU</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 20px">Si te gustan las películas, el arte y el diseño, ' +
+          "Arquitectura, Diseño y Urbanismo es un buen lugar para mirar. Son siete carreras y todas tienen " +
+          "que ver con proyectar algo.</p>" +
+          '<div class="t-h3" style="margin-bottom:12px">Tres que te pueden cerrar</div>' +
+          '<div class="stack-12">' +
+          cierres.map(function (c) {
+            return '<div class="carrera-sugerida">' +
+              '<span class="punto-color" style="background:var(' + c.color + ')"></span>' +
+              '<span class="info"><span class="t-base-fuerte">' + U.esc(c.nombre) + "</span>" +
+              '<span class="t-chico muted">' + U.esc(c.sub) + "</span></span>" +
+              '<span class="chevron">' + U.icono("chevron") + "</span></div>";
+          }).join("") +
+          "</div>",
+        cta: '<button class="btn btn-etapa" id="cta">Me interesa, seguir</button>'
+      });
+      el("cta").onclick = avanzar;
+      cablearSaltar();
+    }
+
+    function jerga() {
+      var palabras = [
+        { color: "--c-lima", palabra: "Correlativa",
+          def: "Una materia que tenés que tener aprobada o regular para poder anotarte en otra. Si falta, la materia te aparece bloqueada." },
+        { color: "--c-naranja", palabra: "Anual o cuatrimestral",
+          def: "Anual dura todo el año; cuatrimestral, medio. En Diseño las materias troncales son anuales." },
+        { color: "--c-celeste", palabra: "Cátedra",
+          def: "La misma materia se dicta en varias versiones, cada una con su equipo docente y su horario. Vos elegís con cuál cursar, desde el CBC." }
+      ];
+      montar({
+        header: topDots(3),
+        main:
+          '<h1 class="t-h1" style="margin-bottom:20px">Tres palabras que vas a escuchar todo el tiempo</h1>' +
+          '<div class="stack-12">' +
+          palabras.map(function (j, i) {
+            return '<div class="card jerga-card">' +
+              '<div class="jerga-top"><span class="jerga-num" style="background:var(' + j.color + ')">' + (i + 1) + "</span>" +
+              '<span class="t-h3">' + U.esc(j.palabra) + "</span></div>" +
+              '<p class="t-chico muted" style="margin-top:10px">' + U.esc(j.def) + "</p></div>";
+          }).join("") +
+          "</div>",
+        cta: '<button class="btn btn-etapa" id="cta">Crear mi cuenta</button>'
+      });
+      el("cta").onclick = avanzar;
+      cablearSaltar();
+    }
+
+    function registro() {
+      montar({
+        header: U.headerAtras("Volver"),
+        main:
+          '<h1 class="t-h1">Creá tu cuenta</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 20px">Guardamos tu avance para que no tengas ' +
+          "que cargarlo de nuevo cada vez.</p>" +
+          '<div class="stack-16">' +
+          campo("Nombre y apellido", "Juan Pérez", "text") +
+          campo("Mail", "carlos@mail.com", "email") +
+          campo("Contraseña", "", "password") +
+          "</div>",
+        cta:
+          '<button class="btn btn-etapa" id="cta" style="margin-bottom:10px">Crear cuenta</button>' +
+          '<button class="btn btn-secundario" id="ya">Ya tengo cuenta</button>'
+      });
+      el("cta").onclick = avanzar;
+      el("ya").onclick = avanzar;
+      cablearAtrasPaso();
+    }
+
+    function facultad() {
+      montar({
+        header: U.headerAtras("Paso 1 de 2"),
+        main:
+          '<h1 class="t-h1" style="margin-bottom:16px">¿En qué facultad vas a estudiar?</h1>' +
+          '<div class="buscador">' + U.icono("lupa") +
+          '<input type="text" placeholder="Buscá tu facultad" aria-label="Buscá tu facultad"></div>' +
+          '<div class="stack-12" style="margin-top:16px" id="grupo-fac">' +
+          cardFaduSel() +
+          D.FACULTADES.filter(function (f) { return !f.habilitada; }).map(function (f) {
+            return '<div class="fila-opcion atenuada" aria-disabled="true">' +
+              '<span class="info"><span class="titulo">' + U.esc(f.nombre) + "</span></span>" +
+              '<span class="chip chip-pronto">Pronto</span></div>';
+          }).join("") +
+          "</div>",
+        cta: '<button class="btn btn-etapa" id="cta">Continuar con FADU</button>'
+      });
+      var info = document.querySelector("[data-info]");
+      if (info) info.addEventListener("click", function (e) { e.stopPropagation(); abrirInfoFadu(); });
+      el("cta").onclick = avanzar;
+      cablearAtrasPaso();
+    }
+
+    function carrera() {
+      var carreras = [
+        { id: "dg",  nombre: "Diseño Gráfico", plan: "Plan 2022 · CBC + 4 años", activa: true },
+        { id: "dis", nombre: "Diseño de Imagen y Sonido", plan: "Plan IS17" },
+        { id: "arq", nombre: "Arquitectura" },
+        { id: "di",  nombre: "Diseño Industrial" },
+        { id: "din", nombre: "Diseño de Indumentaria" },
+        { id: "dtx", nombre: "Diseño Textil" }
+      ];
+      montar({
+        header: U.headerAtras("Paso 2 de 2"),
+        main:
+          '<h1 class="t-h1" style="margin-bottom:16px">¿Qué carrera vas a cursar?</h1>' +
+          '<div class="stack-12">' +
+          carreras.map(function (c) {
+            if (c.activa) {
+              return '<div class="fila-opcion activa"><span class="info">' +
+                '<span class="titulo">' + U.esc(c.nombre) + "</span>" +
+                '<span class="sub">' + U.esc(c.plan) + "</span></span>" +
+                '<span class="radio check">' + U.icono("check") + "</span></div>";
+            }
+            return '<div class="fila-opcion inerte"><span class="info">' +
+              '<span class="titulo">' + U.esc(c.nombre) + "</span>" +
+              (c.plan ? '<span class="sub">' + U.esc(c.plan) + "</span>" : "") + "</span>" +
+              '<span class="chevron">' + U.icono("chevron") + "</span></div>";
+          }).join("") +
+          "</div>",
+        cta: '<button class="btn btn-etapa" id="cta">Continuar</button>'
+      });
+      el("cta").onclick = function () { E.empezarCBC(); go("pages/recorrido.html"); };
+      cablearAtrasPaso();
+    }
+
+    /* utilidades del onboarding */
+    function campo(label, placeholder, tipo) {
+      var val = tipo === "password" ? ' value="demodemo12"' : "";
+      return '<label class="campo"><span class="t-etiqueta muted">' + U.esc(label) + "</span>" +
+        '<input class="input" type="' + (tipo || "text") + '" placeholder="' + U.esc(placeholder) + '"' + val + "></label>";
+    }
+    function cardFaduSel() {
+      var f = D.FADU;
+      return '<div class="fila-opcion activa fac-sel" data-fac="fadu">' +
+        '<span class="info"><span class="titulo">Arquitectura, Diseño y Urbanismo</span>' +
+        '<span class="sub">FADU · ' + f.carreras + " carreras · Ciudad Universitaria</span></span>" +
+        '<span class="row" style="gap:8px">' +
+        '<span class="radio check">' + U.icono("check") + "</span>" +
+        '<button class="chip chip-info" type="button" data-info>+ INFO</button>' +
+        "</span></div>";
+    }
+    function cablearAtrasPaso() {
+      var b = document.querySelector("[data-atras]");
+      if (b) b.onclick = function () { if (paso > 0) { paso--; pasos[paso](); } };
+    }
+
+    splash();
+  }
+
+  /* Hoja inferior A7b — info de FADU */
+  function abrirInfoFadu() {
+    var f = D.FADU;
+    var overlay = document.createElement("div");
+    overlay.className = "hoja-overlay";
+    overlay.innerHTML =
+      '<div class="hoja" role="dialog" aria-label="Información de FADU">' +
+      '<div class="asa"></div>' +
+      '<div class="t-h2">FADU</div>' +
+      '<p class="t-chico muted" style="margin:4px 0 16px">Facultad de Arquitectura, Diseño y Urbanismo</p>' +
+      '<div class="callout" style="margin-bottom:12px">' + U.icono("pin") +
+        '<span class="texto">' + U.esc(f.direccion) + "</span></div>" +
+      '<div class="callout" style="margin-bottom:12px">' + U.icono("bus") +
+        '<span class="texto"><strong>Colectivos:</strong> ' + f.colectivos.join(", ") + "</span></div>" +
+      '<div class="callout" style="margin-bottom:12px">' + U.icono("senal") +
+        '<span class="texto"><strong>Tren:</strong> ' + f.trenes.join(" · ") + ". También Ecobici.</span></div>" +
+      '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:8px">Cerrar</button>' +
+      "</div>";
+    overlayHost().appendChild(overlay);
+    requestAnimationFrame(function () { overlay.classList.add("abierta"); });
+    function cerrar() { overlay.classList.remove("abierta"); setTimeout(function () { overlay.remove(); }, 260); }
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) cerrar(); });
+    el("cerrar-hoja").onclick = cerrar;
+  }
+
+  /* Hoja de detalle de una cátedra (ícono de info en la selección) */
+  function abrirInfoCatedra(cat, materia) {
+    var horarios = {
+      "Mañana": { hs: "8 a 12 hs", dias: "Lunes y miércoles" },
+      "Tarde":  { hs: "14 a 18 hs", dias: "Martes y jueves" },
+      "Noche":  { hs: "19 a 23 hs", dias: "Lunes y jueves" }
+    };
+    var h = horarios[cat.turno] || horarios["Mañana"];
+    var slug = "catedra" + cat.nombre.toLowerCase().replace(/^ex\s+/, "").replace(/[^a-z]/g, "") + ".com.ar";
+    var cadena = ["DG1", "DG2", "DG3", "DG4"];
+    var codigoBase = (materia && materia.codigo) ? materia.codigo : "DG1";
+
+    var overlay = document.createElement("div");
+    overlay.className = "hoja-overlay";
+    overlay.innerHTML =
+      '<div class="hoja" role="dialog" aria-label="Detalle de la cátedra">' +
+      '<div class="asa"></div>' +
+      '<div class="t-caption muted">CÁTEDRA</div>' +
+      '<div class="t-h1" style="margin:2px 0 14px">' + U.esc(cat.nombre) + "</div>" +
+      '<div class="chips-row" style="margin:0 0 16px">' +
+        '<span class="chip chip-dato">Turno ' + U.esc(cat.turno.toLowerCase()) + "</span>" +
+        '<span class="chip chip-dato">' + U.esc(h.hs) + "</span>" +
+        '<span class="chip chip-dato">' + U.esc(h.dias) + "</span>" +
+      "</div>" +
+      '<div class="card" style="margin-bottom:16px"><div class="t-h3" style="margin-bottom:12px">Cursarías acá cuatro años</div>' +
+        '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+        cadena.map(function (c) {
+          var activo = c === codigoBase;
+          return '<span class="chip" style="min-height:40px;padding:8px 16px;background:' +
+            (activo ? "var(--c-navy)" : "var(--c-n200)") + ";color:" + (activo ? "var(--c-blanco)" : "var(--c-n600)") + '">' + c + "</span>";
+        }).join("") + "</div>" +
+        '<p class="t-chico muted" style="margin-top:12px">En esta cátedra, DG4 cursa los ' +
+        (cat.turno === "Noche" ? "jueves" : cat.turno === "Tarde" ? "jueves" : "miércoles") + ".</p></div>" +
+      '<div class="t-h3" style="margin-bottom:10px">Dónde encontrarla</div>' +
+      '<div class="stack-12">' +
+        enlaceExterno("Sitio web", slug, "enlace") +
+        enlaceExterno("Ficha de " + codigoBase + " en fadu.uba.ar", "Horarios y turnos oficiales", "enlace") +
+      "</div>" +
+      '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Qué publica FADU y qué no</div>" +
+        "<p class=\"t-chico\">De cada cátedra se publica nombre, turno, día, horario y un link. " +
+        "Mail, docentes y programa hay que pedirlos a la cátedra.</p></div>" +
+      '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:16px">Cerrar</button>' +
+      "</div>";
+    overlayHost().appendChild(overlay);
+    requestAnimationFrame(function () { overlay.classList.add("abierta"); });
+    function cerrar() { overlay.classList.remove("abierta"); setTimeout(function () { overlay.remove(); }, 260); }
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) cerrar(); });
+    el("cerrar-hoja").onclick = cerrar;
+  }
+
+  function enlaceExterno(titulo, sub, icn) {
+    return '<div class="fila-opcion" style="border-color:var(--c-n200)">' +
+      '<span class="info"><span class="titulo">' + U.esc(titulo) + "</span>" +
+      '<span class="sub">' + U.esc(sub) + "</span></span>" +
+      '<span class="chevron" style="color:var(--c-n400)">' + U.icono(icn || "enlace") + "</span></div>";
+  }
+
+  /* ============================================================
+     PÁGINA: Hub de recorrido (recorrido.html)
+     ============================================================ */
+  function pageRecorrido() {
+    pintarEtapa("cbc");
+    var est = E.get();
+    var aprobCBC = E.aprobadasCBC();
+    var cbcListo = aprobCBC >= D.CBC.total;
+    var carreraListo = est.etapa === "graduado";
+
+    function etapaCard(cfg) {
+      // cfg: { num, color, titulo, sub, estado(html), href, abierta, bloqueoTxt }
+      var abierta = cfg.abierta;
+      var tag = abierta ? "a" : "div";
+      var clase = "etapa-card" + (abierta ? " abierta" : " cerrada");
+      var hrefAttr = abierta ? ' href="' + cfg.href + '"' : "";
+      var txt = cfg.color === "--c-lima" ? "--c-navy" : "--c-blanco";
+      var icono = abierta
+        ? '<span class="etapa-num" style="background:var(' + cfg.color + ');color:var(' + txt + ')">' + cfg.num + "</span>"
+        : '<span class="etapa-num bloq">' + U.icono("candado") + "</span>";
+      var trailing = abierta
+        ? '<span class="chevron">' + U.icono("chevron") + "</span>"
+        : "";
+      return "<" + tag + ' class="' + clase + '"' + hrefAttr + ">" +
+        '<div class="etapa-top">' + icono +
+        '<div class="etapa-info"><div class="t-h3">' + U.esc(cfg.titulo) + "</div>" +
+        '<div class="t-chico muted">' + U.esc(cfg.sub) + "</div></div>" + trailing + "</div>" +
+        (cfg.estado ? '<div class="etapa-estado">' + cfg.estado + "</div>" : "") +
+        "</" + tag + ">";
+    }
+
+    var cbcEstado = cbcListo
+      ? '<span class="chip chip-aprobada">' + U.icono("check") + "Cerrado · 7 de 7</span>"
+      : '<span class="chip" style="background:var(--c-naranja);color:var(--c-navy)">' +
+        (aprobCBC === 0 ? "Sin empezar · 0 de 7" : "En curso · " + aprobCBC + " de 7") + "</span>";
+
+    U.montarApp(APP(), {
+      header:
+        '<header class="app-header header-dash"><div class="dash-titulos"><div class="t-h1">Mi recorrido</div>' +
+        '<div class="t-chico muted dash-sub">Diseño Gráfico · FADU · UBA</div></div></header>',
+      main:
+        '<div class="stack-16">' +
+        etapaCard({ num: "1", color: "--c-lima", titulo: "El CBC",
+          sub: cbcListo ? "7 materias · ¡las aprobaste todas!" : "7 materias · todavía no te anotaste a ninguna",
+          estado: cbcEstado, href: "cbc.html", abierta: true }) +
+        etapaCard({ num: "2", color: "--c-azul", titulo: "La carrera", sub: "4 años · 33 materias y seminarios",
+          estado: cbcListo ? '<span class="chip chip-inscripta">Disponible</span>' : '<span class="etapa-bloqueo">Se abre al terminar el CBC</span>',
+          href: "carrera.html", abierta: cbcListo }) +
+        etapaCard({ num: "3", color: "--c-violeta", titulo: "Título y posgrado", sub: "Trámite del diploma y qué sigue",
+          estado: carreraListo ? '<span class="chip chip-inscripta">Disponible</span>' : '<span class="etapa-bloqueo">Se abre al terminar de cursar</span>',
+          href: "titulo.html", abierta: carreraListo }) +
+        "</div>" +
+        '<div class="callout callout-lavanda" style="margin-top:20px">' + U.icono("info") +
+        '<span class="texto"><strong>Una etapa por vez.</strong> Cada etapa se abre cuando cerrás la anterior. ' +
+        "Así no te marea todo junto desde el primer día.</span></div>" +
+        botonReiniciar(),
+      nav: null
+    });
+    cablearReiniciar();
+  }
+
+  /* ============================================================
+     PÁGINA: Dashboard del CBC (cbc.html)
+     ============================================================ */
+  function pageCBC() {
+    pintarEtapa("cbc");
+    if (E.get().etapa === "onboarding") E.empezarCBC();
+    var aprob = E.aprobadasCBC();
+    var cerrado = aprob >= D.CBC.total;
+
+    var filas = D.CBC.materias.map(function (m) {
+      var est = E.estadoMateria(m.id);
+      var cuenta = m.comisiones ? m.comisiones.length + " comisiones" : null;
+      return U.filaMateria(m, est, {
+        href: m.enMuestra ? "materia.html?etapa=cbc&id=" + m.id : null,
+        atenuada: !m.enMuestra,
+        meta: m.cursada + (m.enMuestra && cuenta ? " · " + cuenta : "")
+      });
+    }).join("");
+
+    var helper = cerrado ? "¡Aprobaste las 7! Ya podés empezar la carrera." :
+                 aprob === 0 ? "Todavía no te anotaste a ninguna. Es el momento." :
+                 "Seguí así, te faltan " + (D.CBC.total - aprob) + ".";
+
+    U.montarApp(APP(), {
+      header: U.headerDashboard("Hola, Juan", "Etapa 1 · El CBC"),
+      main:
+        '<div class="hero-etapa"><div class="t-display-l">' + aprob + " de " + D.CBC.total + "</div>" +
+        '<div class="t-base-fuerte" style="margin:6px 0 16px">materias del CBC aprobadas</div>' +
+        U.barra(aprob, D.CBC.total) +
+        '<p class="t-chico" style="margin-top:14px;opacity:.85">' + U.esc(helper) + "</p></div>" +
+        (cerrado
+          ? '<button class="btn btn-primario" id="empezar-carrera" style="margin-bottom:20px">Empezar la carrera' + U.icono("flecha") + "</button>"
+          : '<a class="btn btn-naranja" href="cbc-materias.html" style="margin-bottom:20px">' +
+            (aprob === 0 ? "Anotarme a mis primeras materias" : "Anotarme a más materias") + U.icono("flecha") + "</a>") +
+        '<div class="callout callout-celeste">' + U.icono("info") +
+        '<span class="texto"><strong>¿Cómo funciona el CBC?</strong> Son 7 materias. Te anotás eligiendo sede ' +
+        "y comisión, cursás, y cuando aprobás las 7 entrás a Diseño Gráfico.</span></div>" +
+        '<div class="seccion-titulo"><h2>Tus 7 materias</h2>' +
+        '<span class="conteo">3 en la muestra</span></div>' +
+        '<div class="lista-materias">' + filas + "</div>",
+      nav: { etapa: "cbc", activo: "progreso" }
+    });
+
+    if (cerrado) {
+      el("empezar-carrera").onclick = function () { mostrarHito({ tipo: "cierre-cbc" }); };
+    }
+  }
+
+  /* ============================================================
+     Pantalla de hito — transición animada de pasaje de etapa/año
+     tipo: "cierre-cbc" | "pasaje-anio" (hacia) | "fin-carrera"
+     ============================================================ */
+  function configHito(hito) {
+    var total = D.CARRERA.totalMaterias; // 33
+    if (hito.tipo === "cierre-cbc") {
+      return {
+        color: "--c-celeste", texto: "navy", circulo: "--c-navy", icono: "diploma",
+        titulo: "Entraste<br>a la carrera",
+        sub: "Cerraste el CBC. Desde hoy cursás en FADU y elegís cátedra, no comisión.",
+        num: 7, chip: "CBC completo", helper: "Te faltan " + (total - 7) + " materias para recibirte.",
+        cta: "Ver mi primer año",
+        onCta: function () { E.cerrarCBC(); go("carrera.html?anio=1"); }
+      };
+    }
+    if (hito.tipo === "fin-carrera") {
+      return {
+        color: "--c-azul", texto: "blanco", circulo: "--c-blanco", icono: "diploma", iconoColor: "--c-azul",
+        titulo: "Terminaste<br>de cursar",
+        sub: "33 materias, 3 seminarios y 5 años. Ya no te queda nada por rendir: lo que sigue es el papel.",
+        etapaCard: { num: 3, titulo: "Se abrió la etapa 3", sub: "Título y posgrado" },
+        cta: "Ir al trámite de título",
+        onCta: function () { E.graduarse(); go("titulo.html"); }
+      };
+    }
+    // pasaje-anio
+    var destino = hito.hacia;
+    var acentos = { 2: "--c-violeta", 3: "--c-amarillo", 4: "--c-coral" };
+    var textos  = { 2: "blanco", 3: "navy", 4: "navy" };
+    var anioObj = D.CARRERA.anios[destino - 1];
+    var acum = anioObj.baseAprobadas; // acumulado al empezar el año destino
+    var subs = {
+      2: "Aprobaste las siete de primero. Te quedan " + (total - acum) + " materias para recibirte.",
+      3: "Aprobaste DG2 y se te abrió DG3. Te quedan " + (total - acum) + " materias para recibirte.",
+      4: "Último año. Aprobaste DG3 y DG4 ya está habilitada."
+    };
+    var helpers = {
+      2: "Para pasar a 3º necesitás aprobar DG2.",
+      3: "Para pasar a 4º necesitás aprobar DG3.",
+      4: "Te faltan " + (total - acum) + " unidades para terminar de cursar."
+    };
+    return {
+      color: acentos[destino], texto: textos[destino], circulo: "--c-navy", icono: "check",
+      titulo: "Empezaste<br>" + destino + "º año",
+      sub: subs[destino],
+      num: acum, chip: (destino - 1) + "º completo", helper: helpers[destino],
+      cta: "Ver mi " + (destino === 2 ? "segundo" : destino === 3 ? "tercer" : "último") + " año",
+      onCta: function () { E.pasarAnio(destino); go("carrera.html?anio=" + destino); }
+    };
+  }
+
+  function mostrarHito(hito) {
+    var c = configHito(hito);
+    var total = D.CARRERA.totalMaterias;
+    var iconoColor = c.iconoColor || c.color;
+
+    var tarjeta;
+    if (c.etapaCard) {
+      tarjeta =
+        '<div class="hito-card hito-card-etapa">' +
+        '<span class="hito-etapa-num">' + c.etapaCard.num + "</span>" +
+        '<div><div class="t-base-fuerte">' + U.esc(c.etapaCard.titulo) + "</div>" +
+        '<div class="t-chico muted">' + U.esc(c.etapaCard.sub) + "</div></div></div>";
+    } else {
+      var pct = Math.round((c.num / total) * 100);
+      tarjeta =
+        '<div class="hito-card">' +
+        '<div class="hito-card-top"><span class="t-h2">' + c.num + " de " + total + "</span>" +
+        '<span class="chip chip-aprobada">' + U.esc(c.chip) + "</span></div>" +
+        '<div class="barra" style="margin:14px 0 12px"><div class="relleno hito-fill" style="width:0"></div></div>' +
+        '<p class="t-chico muted">' + U.esc(c.helper) + "</p></div>";
+      // anima la barra al valor real
+      setTimeout(function () {
+        var f = document.querySelector(".hito-fill");
+        if (f) f.style.width = pct + "%";
+      }, 350);
+    }
+
+    var cel = document.createElement("div");
+    cel.className = "hito-pantalla texto-" + c.texto;
+    cel.setAttribute("data-nav", "false");
+    cel.style.background = "var(" + c.color + ")";
+    cel.innerHTML =
+      '<div class="hito-contenido">' +
+      '<span class="hito-icono" style="background:var(' + c.circulo + ');color:var(' + iconoColor + ')">' +
+        U.icono(c.icono) + "</span>" +
+      '<h1 class="t-display-l hito-titulo">' + c.titulo + "</h1>" +
+      '<p class="t-base-fuerte hito-sub">' + U.esc(c.sub) + "</p>" +
+      tarjeta +
+      "</div>" +
+      '<div class="cta-bar"><button class="btn btn-primario" id="hito-cta">' + U.esc(c.cta) + "</button></div>";
+    overlayHost().appendChild(cel);
+    requestAnimationFrame(function () { cel.classList.add("entra"); });
+    el("hito-cta").onclick = c.onCta;
+  }
+
+  /* ============================================================
+     PÁGINA: Las 7 materias del CBC (cbc-materias.html)
+     ============================================================ */
+  function pageCBCMaterias() {
+    pintarEtapa("cbc");
+    var filas = D.CBC.materias.map(function (m) {
+      var est = E.estadoMateria(m.id);
+      return U.filaMateria(m, est, {
+        href: m.enMuestra ? "materia.html?etapa=cbc&id=" + m.id : null,
+        atenuada: !m.enMuestra
+      });
+    }).join("");
+
+    U.montarApp(APP(), {
+      header: '<header class="app-header"><div class="t-h1">Materias del CBC</div></header>',
+      main:
+        '<p class="t-base muted" style="margin-bottom:16px">Siete materias. Tres tienen el flujo completo ' +
+        'para que pruebes inscribirte, cursar y aprobar.</p>' +
+        '<div class="lista-materias">' + filas + "</div>",
+      nav: { etapa: "cbc", activo: "materias" }
+    });
+  }
+
+  /* ============================================================
+     PÁGINA: Ficha de materia (materia.html) — máquina de 7 estados
+     ?etapa=cbc|carrera  &id=…  [&vista=comisiones|catedras]
+     ============================================================ */
+  function pageMateria() {
+    var id = qs("id");
+    var info = D.buscarMateria(id);
+    if (!info) { go("recorrido.html"); return; }
+    var etapa = info.etapa;
+    var anio = info.anio;
+    var m = info.materia;
+    pintarEtapa(etapa, anio);
+
+    var est = E.estadoMateria(id);
+    var vista = qs("vista");
+    var navCfg = etapa === "cbc"
+      ? { etapa: "cbc", activo: "materias" }
+      : { etapa: "carrera", activo: "progreso", anio: anio };
+
+    /* ---- Paso de selección (comisiones / cátedras) ---- */
+    if (vista === "seleccion") { return vistaSeleccion(); }
+
+    /* ---- Router por estado ---- */
+    if (est === "no-inscripta") return vistaFicha();
+    if (est === "inscripta")   return vistaInscripta();
+    if (est === "cursando")    return vistaCursando();
+    if (est === "aprobada")    return vistaAprobada();
+    if (est === "desaprobada") return vistaDesaprobada();
+    if (est === "libre")       return vistaLibre();
+    return vistaFicha();
+
+    /* ---------- a) No inscripta ---------- */
+    function vistaFicha() {
+      var esCBC = etapa === "cbc";
+      var cuenta = esCBC ? (m.comisiones ? m.comisiones.length : 0) : (m.catedras ? m.catedras.length : 0);
+      var selTitulo = cuenta + (esCBC ? " comisiones" : " cátedras");
+      var selSub = esCBC ? "Elegís sede y turno" : (m.id === "dg1" ? "Elegís tu cátedra vertical" : "Según el listado de FADU");
+
+      U.montarApp(APP(), {
+        header: U.headerAtras(esCBC ? "Materia del CBC" : "Materia de " + anio + "º año"),
+        main:
+          '<div class="t-h1">' + U.esc(m.nombre) + "</div>" +
+          '<div class="chips-row">' +
+            U.chipEstado("no-inscripta") +
+            '<span class="chip chip-dato">' + U.esc(m.cursada) + "</span>" +
+            '<span class="chip chip-dato">' + U.esc(m.horas) + "</span>" +
+          "</div>" +
+          '<div class="card card-celeste"><div class="t-h3">¿De qué se trata?</div>' +
+          '<p class="t-chico" style="margin-top:8px">' + U.esc(m.descripcion || "") + "</p></div>" +
+          '<div class="card card-lima" style="margin-top:12px"><div class="t-h3">Cómo se aprueba</div>' +
+          '<p class="t-chico" style="margin-top:8px">' + U.esc(m.evaluacion || "") + "</p></div>" +
+          '<button class="selector-card" id="ir-seleccion">' +
+            '<span class="sel-icono">' + U.icono(esCBC ? "pin" : "libro") + "</span>" +
+            '<span class="info"><span class="t-base-fuerte">' + U.esc(selTitulo) + "</span>" +
+            '<span class="t-chico muted">' + U.esc(selSub) + "</span></span>" +
+            '<span class="chevron">' + U.icono("chevron") + "</span></button>",
+        cta: '<button class="btn btn-primario" id="anotarme">Anotarme a la materia' + U.icono("flecha") + "</button>",
+        nav: navCfg
+      });
+      function irSel() { go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); }
+      el("anotarme").onclick = irSel;
+      el("ir-seleccion").onclick = irSel;
+    }
+
+    /* ---------- b/b2) Selección de comisión o cátedra ---------- */
+    function vistaSeleccion() {
+      var esCBC = etapa === "cbc";
+      // Cátedra vertical de Diseño ya fijada (DG2–DG4): no deja elegir
+      var verticalFija = !esCBC && m.seleccionCatedra === "vertical" && E.get().catedraDiseno;
+
+      if (verticalFija) return vistaVertical();
+
+      var opciones = esCBC ? m.comisiones : m.catedras;
+      var titulo = esCBC ? "Elegí tu comisión" : "Elegí tu cátedra";
+      var sub = esCBC
+        ? "En el CBC se elige sede y turno."
+        : (m.id === "dg1"
+            ? "Ojo: la cátedra que elijas en Diseño Gráfico I te acompaña hasta Diseño Gráfico IV."
+            : "Las cátedras se agrupan por turno. Los nombres salen del listado oficial de FADU.");
+
+      var filasHTML = opciones.map(function (o, i) {
+        var titu = esCBC ? o.sede : o.nombre;
+        var subt = esCBC ? (o.turno + " · " + o.dias) : ("Turno " + o.turno.toLowerCase());
+        var infoBtn = esCBC ? "" :
+          '<span class="btn-info-catedra" role="button" tabindex="0" data-info-i="' + i + '" aria-label="Info de la cátedra">' +
+          U.icono("info") + "</span>";
+        return '<button class="fila-opcion" type="button" aria-pressed="false" data-i="' + i + '" ' +
+          'data-valor="' + U.esc(titu) + '">' +
+          '<span class="info"><span class="titulo">' + U.esc(titu) + "</span>" +
+          '<span class="sub">' + U.esc(subt) + "</span></span>" +
+          infoBtn +
+          '<span class="radio">' + U.icono("check") + "</span></button>";
+      }).join("");
+
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          '<div class="t-h1">' + U.esc(titulo) + "</div>" +
+          '<p class="t-base muted" style="margin:8px 0 20px">' + U.esc(sub) + "</p>" +
+          (esCBC ? "" : noteFADU()) +
+          '<div class="grupo-opciones stack-12" id="grupo-sel">' + filasHTML + "</div>",
+        cta:
+          '<div id="leyenda" class="t-caption muted center" style="margin-bottom:8px">' +
+          "Elegí una " + (esCBC ? "comisión" : "cátedra") + " para continuar</div>" +
+          '<button class="btn btn-etapa" id="inscribirme" disabled aria-disabled="true">Inscribirme a la materia</button>',
+        nav: navCfg
+      });
+
+      var elegido = null;
+      var grupo = el("grupo-sel");
+      grupo.classList.remove("con-eleccion");
+      grupo.querySelectorAll(".fila-opcion").forEach(function (b) {
+        b.addEventListener("click", function (ev) {
+          // El ícono de info abre el detalle, no selecciona
+          if (ev.target.closest("[data-info-i]")) {
+            var iInfo = ev.target.closest("[data-info-i]").getAttribute("data-info-i");
+            abrirInfoCatedra(opciones[iInfo], m);
+            return;
+          }
+          grupo.querySelectorAll(".fila-opcion").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+          b.setAttribute("aria-pressed", "true");
+          grupo.classList.add("con-eleccion");
+          elegido = b.getAttribute("data-valor");
+          var c = el("inscribirme");
+          c.disabled = false; c.setAttribute("aria-disabled", "false");
+          var leyenda = el("leyenda"); if (leyenda) leyenda.style.display = "none";
+        });
+      });
+      el("inscribirme").onclick = function () {
+        if (!elegido) return;
+        E.inscribir(id, elegido);
+        go("materia.html?etapa=" + etapa + "&id=" + id);
+      };
+    }
+
+    /* ---------- b) Vertical fija (DG2–DG4) ---------- */
+    function vistaVertical() {
+      var cat = E.get().catedraDiseno;
+      var cadena = ["dg1", "dg2", "dg3", "dg4"];
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          '<div class="t-h1">Tu cátedra</div>' +
+          '<p class="t-base muted" style="margin:8px 0 20px">En Diseño Gráfico la cátedra es vertical: ' +
+          "seguís con la que elegiste en DG1.</p>" +
+          '<div class="card-acento" style="margin-bottom:16px"><div class="t-caption">TU CÁTEDRA</div>' +
+          '<div class="t-h2" style="margin-top:4px">' + U.esc(cat) + "</div></div>" +
+          '<div class="t-etiqueta muted" style="margin-bottom:8px">La cadena de Diseño Gráfico</div>' +
+          '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:16px">' +
+          cadena.map(function (c, i) {
+            var activo = c === id;
+            return '<span class="chip" style="background:' + (activo ? "var(--acento)" : "var(--c-n200)") +
+              ';color:' + (activo ? "var(--c-blanco)" : "var(--c-n600)") + '">' + c.toUpperCase() + "</span>" +
+              (i < 3 ? '<span class="muted">→</span>' : "");
+          }).join("") + "</div>" +
+          '<div class="callout">' + U.icono("info") +
+          '<span class="texto"><strong>¿Me puedo cambiar?</strong> Sí, pero hay que pedirlo en la cátedra ' +
+          "y no siempre hay lugar. La mayoría sigue con la misma hasta DG4.</span></div>",
+        cta: '<button class="btn btn-etapa" id="inscribirme">Inscribirme a la materia</button>',
+        nav: navCfg
+      });
+      el("inscribirme").onclick = function () {
+        E.inscribir(id, cat);
+        go("materia.html?etapa=" + etapa + "&id=" + id);
+      };
+    }
+
+    /* ---------- c) Inscripta ---------- */
+    function vistaInscripta() {
+      var dm = E.datosMateria(id);
+      var sel = dm.comision || dm.catedra || "—";
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          encabezadoMateria("inscripta") +
+          '<div class="card-acento" style="margin-top:16px;display:flex;gap:12px;align-items:center">' +
+          '<span class="check-estado" style="background:var(--c-navy);color:var(--c-blanco);width:36px;height:36px">' + U.icono("check") + "</span>" +
+          '<div><div class="t-base-fuerte">¡Quedaste inscripto!</div>' +
+          '<div class="t-chico muted">' + (etapa === "cbc" ? "Comisión" : "Cátedra") + ": " + U.esc(sel) + "</div></div></div>" +
+          '<div class="card" style="margin-top:12px"><div class="t-h3">Lo que viene</div>' +
+          '<p class="t-chico muted" style="margin-top:8px">Cuando arranquen las clases vas a ver tus parciales acá. ' +
+          "Por ahora ya tenés tu lugar asegurado.</p></div>",
+        cta: '<button class="btn btn-etapa" id="cursar">Empezar a cursar' + U.icono("flecha") + "</button>",
+        nav: navCfg
+      });
+      el("cursar").onclick = function () {
+        // Al empezar a cursar, volvés al dashboard con la materia en "cursando".
+        // Tocando la card ahí aparecen "La aprobé / No la aprobé / Dejé de cursar".
+        E.empezarCursada(id);
+        go(etapa === "cbc" ? "cbc.html" : "carrera.html?anio=" + anio);
+      };
+    }
+
+    /* ---------- d) Cursando ---------- */
+    function vistaCursando() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          encabezadoMateria("cursando") +
+          '<div class="seccion-titulo"><h2>Parciales</h2></div>' +
+          '<div class="stack-12">' +
+          parcialCard("1er parcial", "Aprobado · 7", "aprobada") +
+          parcialCard("2do parcial", "Pendiente", "no-inscripta") +
+          "</div>" +
+          '<div class="callout" style="margin-top:16px">' + U.icono("info") +
+          '<span class="texto">Aprobás con 4 en cada parcial y promocionás con 7. ' +
+          "Si desaprobás uno, hay recuperatorio.</span></div>",
+        cta:
+          '<div class="row" style="gap:10px;margin-bottom:10px">' +
+          '<button class="btn btn-etapa" id="aprobe" style="flex:1">La aprobé</button>' +
+          '<button class="btn btn-peligro" id="no-aprobe" style="flex:1">No la aprobé</button>' +
+          "</div>" +
+          '<button class="btn btn-fantasma t-chico" id="deje" style="min-height:40px">Dejé de cursar</button>',
+        nav: navCfg
+      });
+      el("aprobe").onclick = function () {
+        var hito = E.aprobar(id);
+        if (hito) {
+          // Aprobó la 3ra del año/CBC: pantalla de transición animada
+          mostrarHito(hito);
+        } else {
+          // Aprobación normal: notificación + volver al dashboard tildado
+          go("materia.html?etapa=" + etapa + "&id=" + id);
+        }
+      };
+      el("no-aprobe").onclick = function () { E.desaprobar(id); go("materia.html?etapa=" + etapa + "&id=" + id); };
+      el("deje").onclick = function () { go("quedar-libre.html?id=" + id); };
+    }
+
+    /* ---------- e) Aprobada — notificación + volver al dashboard ---------- */
+    function vistaAprobada() {
+      var dashHref = etapa === "cbc" ? "cbc.html" : "carrera.html?anio=" + anio;
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          encabezadoMateria("aprobada") +
+          '<div class="aprobada-noti">' +
+          '<span class="noti-check">' + U.icono("check") + "</span>" +
+          '<div><div class="t-h3">¡Aprobaste la materia!</div>' +
+          '<p class="t-chico" style="margin-top:4px">' + U.esc(m.codigo) +
+          " quedó registrada con check en tu dashboard.</p></div></div>",
+        cta: '<a class="btn btn-etapa" id="volver" href="' + dashHref + '">Volver al dashboard</a>',
+        nav: navCfg
+      });
+    }
+
+    /* ---------- f) Desaprobada ---------- */
+    function vistaDesaprobada() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          encabezadoMateria("desaprobada") +
+          '<div class="card" style="margin-top:16px;border-left:4px solid var(--c-coral)">' +
+          '<div class="t-h3" style="color:var(--c-coral)">Perdiste el final, no la cursada</div>' +
+          '<p class="t-chico muted" style="margin-top:8px">La cursada sigue valiendo. ' +
+          "Alcanza con rendir de nuevo en la próxima mesa de examen.</p></div>" +
+          '<div class="callout" style="margin-top:12px">' + U.icono("info") +
+          '<span class="texto">Distinto de quedar <strong>libre</strong>: ahí sí perdés la regularidad ' +
+          "y tenés que rendir libre o recursar.</span></div>",
+        cta:
+          '<button class="btn btn-etapa" id="recuperatorio" style="margin-bottom:10px">Anotarme a la mesa</button>' +
+          '<button class="btn btn-secundario" id="recursar">Recursar la materia</button>',
+        nav: navCfg
+      });
+      el("recuperatorio").onclick = function () { E.empezarCursada(id); go("materia.html?etapa=" + etapa + "&id=" + id); };
+      el("recursar").onclick = function () { E.recursar(id); go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); };
+    }
+
+    /* ---------- Libre ---------- */
+    function vistaLibre() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          encabezadoMateria("libre") +
+          '<div class="card" style="margin-top:16px;border-left:4px solid var(--c-magenta)">' +
+          '<div class="t-h3" style="color:var(--c-magenta)">Quedaste libre</div>' +
+          '<p class="t-chico muted" style="margin-top:8px">Perdiste la regularidad de la cursada. ' +
+          "Podés rendir libre o volver a cursar.</p></div>",
+        cta:
+          '<button class="btn btn-etapa" id="rendir" style="margin-bottom:10px">Rendir libre</button>' +
+          '<button class="btn btn-secundario" id="recursar">Volver a cursar</button>',
+        nav: navCfg
+      });
+      el("rendir").onclick = function () { E.empezarCursada(id); go("materia.html?etapa=" + etapa + "&id=" + id); };
+      el("recursar").onclick = function () { E.recursar(id); go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); };
+    }
+
+    /* ---------- utilidades de la materia ---------- */
+    function encabezadoMateria(estadoActual) {
+      return '<div class="row" style="gap:14px;align-items:flex-start">' +
+        '<span class="fila-materia" style="display:none"></span></div>' +
+        '<div class="stack-8"><div class="row-between"><div class="t-caption muted">' +
+        (etapa === "cbc" ? "CBC" : anio + "º AÑO · " + (D.CARRERA.anios[anio - 1].ciclo)) + "</div>" +
+        U.chipEstado(estadoActual) + "</div>" +
+        '<div class="t-h1">' + U.esc(m.nombre) + "</div>" +
+        '<div class="t-chico muted">' + U.esc(m.cursada + " · " + m.horas) + "</div></div>";
+    }
+    function parcialCard(titulo, estadoTxt, estadoCls) {
+      return '<div class="fila-materia" style="box-shadow:none;background:var(--c-blanco)">' +
+        '<span class="codigo" data-estado="' + estadoCls + '">' + (estadoCls === "aprobada" ? U.icono("check") : "·") + "</span>" +
+        '<span class="info"><span class="nombre">' + titulo + "</span>" +
+        '<span class="meta">' + estadoTxt + "</span></span></div>";
+    }
+    function cardHito(titulo, texto, botonTxt, onClick) {
+      var htmlId = "hito-cta";
+      setTimeout(function () { var b = el(htmlId); if (b) b.onclick = onClick; }, 0);
+      return '<div class="card-oscura" style="margin-top:16px">' +
+        '<div class="row" style="gap:10px;margin-bottom:8px">' +
+        '<span style="color:var(--c-lima)">' + U.icono("campana") + "</span>" +
+        '<span class="t-h3" style="color:var(--c-blanco)">' + U.esc(titulo) + "</span></div>" +
+        '<p class="t-chico" style="opacity:.85;margin-bottom:14px">' + U.esc(texto) + "</p>" +
+        '<button class="btn btn-etapa" id="' + htmlId + '">' + U.esc(botonTxt) + U.icono("flecha") + "</button></div>";
+    }
+    function noteFADU() {
+      return '<div class="callout" style="margin-bottom:16px">' + U.icono("enlace") +
+        '<span class="texto">FADU publica de cada cátedra sólo nombre, turno, día, horario y un link. ' +
+        "No publica mails ni equipo docente.</span></div>";
+    }
+  }
+
+  /* Anillo de arco (sin número en el centro) para el hero de la carrera */
+  function anilloArco(pct) {
+    var r = 42, c = 2 * Math.PI * r;
+    var offset = c * (1 - pct / 100);
+    return '<div class="anillo-arco"><svg viewBox="0 0 100 100">' +
+      '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="9"/>' +
+      '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="var(--acento-anio)" stroke-width="9" ' +
+      'stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + offset.toFixed(1) +
+      '" transform="rotate(-90 50 50)"/></svg></div>';
+  }
+
+  /* ============================================================
+     PÁGINA: Dashboard de año de la carrera (carrera.html?anio=1..4)
+     ============================================================ */
+  function pageCarrera() {
+    var est = E.get();
+    var anio = parseInt(qs("anio"), 10) || est.anioActual || 1;
+    if (anio < 1) anio = 1; if (anio > 4) anio = 4;
+    pintarEtapa("carrera", anio);
+    var anioObj = D.CARRERA.anios[anio - 1];
+    var aprobGlobal = anioObj.baseAprobadas + E.aprobadasAnio(anio);
+
+    var filas = anioObj.materias.map(function (m) {
+      var e = E.estadoMateria(m.id);
+      var bloq = !E.habilitada(m);
+      var cuenta = m.catedras ? m.catedras.length + " cátedras" : null;
+      return U.filaMateria(m, e, {
+        href: "materia.html?etapa=carrera&id=" + m.id,
+        bloqueada: bloq,
+        codigoPrefijo: true,
+        meta: m.cursada + (cuenta ? " · " + cuenta : "")
+      });
+    }).join("");
+
+    var pct = Math.round((aprobGlobal / D.CARRERA.totalMaterias) * 100);
+    var helper = pct < 25 ? "Recién entraste. Las tres anuales son las que marcan el año." :
+                 pct < 80 ? "Vas en camino. Seguí con los talleres troncales." :
+                 "Estás cerca de recibirte.";
+
+    var selectorAnios = '<div class="selector-anios">' +
+      [1, 2, 3, 4].map(function (n) {
+        var activo = n === anio;
+        var bloqueado = n > est.anioActual;
+        var cls = "pill-anio" + (activo ? " activo" : "") + (bloqueado ? " bloqueado" : "");
+        var inner = (bloqueado ? U.icono("candado") : "") +
+          '<span class="pill-num">' + n + "º</span>" +
+          (activo ? '<span class="pill-dot"></span>' : "");
+        return bloqueado
+          ? '<span class="' + cls + '" aria-disabled="true">' + inner + "</span>"
+          : '<a href="carrera.html?anio=' + n + '" class="' + cls + '"' + (activo ? ' aria-current="true"' : "") + ">" + inner + "</a>";
+      }).join("") + "</div>";
+
+    U.montarApp(APP(), {
+      header: U.headerDashboard("Hola, Juan", "Etapa 2 · " + anio + "º año · " + anioObj.ciclo),
+      main:
+        '<div class="hero-etapa"><div class="hero-row">' +
+          anilloArco(pct) +
+          '<div class="hero-texto"><div class="t-display-l">' + pct + "%</div>" +
+          '<div class="t-base-fuerte">de la carrera</div>' +
+          '<div class="t-chico" style="opacity:.8">' + aprobGlobal + " de 33 materias</div></div>" +
+        "</div><hr class=\"hero-divisor\">" +
+        '<p class="t-chico" style="opacity:.9">' + U.esc(helper) + "</p></div>" +
+        selectorAnios +
+        '<div class="seccion-titulo"><h2>Para anotarte</h2>' +
+        '<span class="conteo">3 de ' + anioObj.total + "</span></div>" +
+        '<div class="lista-materias">' + filas + "</div>" +
+        '<a href="arbol.html?anio=' + anio + '" class="btn btn-secundario" style="margin-top:16px">' +
+        U.icono("arbol") + "Ver árbol de correlatividades</a>",
+      nav: { etapa: "carrera", activo: "progreso", anio: anio }
+    });
+  }
+
+  /* ============================================================
+     PÁGINA: Árbol de correlatividades (arbol.html?anio=)
+     ============================================================ */
+  function pageArbol() {
+    var est = E.get();
+    var anio = parseInt(qs("anio"), 10) || est.anioActual || 1;
+    if (anio < 1) anio = 1; if (anio > 4) anio = 4;
+    pintarEtapa("carrera", anio);
+    var spec = D.ARBOL_ANIOS[anio];
+
+    // Estado real superpuesto sobre el estado base del diseño
+    function resolver(celda) {
+      var base = { ap: "aprobada", cu: "cursando", ha: "habilitada", bl: "bloqueada" }[celda.s];
+      var info = D.buscarMateria(celda.c.toLowerCase());
+      if (info) {
+        var real = E.estadoMateria(celda.c.toLowerCase());
+        if (real === "aprobada") return "aprobada";
+        if (real === "cursando") return "cursando";
+        if (real === "inscripta") return "habilitada";
+      }
+      return base;
+    }
+
+    // Grid de nodos con conectores verticales
+    var grid = '<div class="arbol-grid' + (spec.sinLineas ? " sin-lineas" : "") + '">';
+    spec.filas.forEach(function (fila, r) {
+      fila.forEach(function (celda, col) {
+        if (!celda) { grid += '<span class="arbol-celda"></span>'; return; }
+        var e = resolver(celda);
+        var abajo = spec.filas[r + 1] && spec.filas[r + 1][col];
+        var conecta = !spec.sinLineas && abajo ? ' data-conecta="1"' : "";
+        var tracked = D.buscarMateria(celda.c.toLowerCase());
+        var inner = '<span class="arbol-nodo" data-estado="' + e + '"' + conecta + ">" + U.esc(celda.c) + "</span>";
+        if (tracked && e !== "bloqueada") {
+          grid += '<a class="arbol-celda" href="materia.html?etapa=carrera&id=' + celda.c.toLowerCase() + '">' + inner + "</a>";
+        } else {
+          grid += '<span class="arbol-celda">' + inner + "</span>";
+        }
+      });
+    });
+    grid += "</div>";
+
+    U.montarApp(APP(), {
+      header: U.headerAtras("Árbol de correlatividades"),
+      main:
+        arbolSelector(anio, est.anioActual) +
+        '<div class="arbol-panel">' + grid + "</div>" +
+        '<div class="arbol-leyenda">' +
+        '<span><span class="punto-leyenda ap"></span>Aprobada</span>' +
+        '<span><span class="punto-leyenda ha"></span>Habilitada</span>' +
+        '<span><span class="punto-leyenda bl"></span>Bloqueada</span></div>' +
+        '<div class="callout callout-anio"><div class="texto"><strong>' + U.esc(spec.callout.t) + "</strong><br>" +
+        U.esc(spec.callout.x) + "</div></div>",
+      nav: { etapa: "carrera", activo: "arbol", anio: anio }
+    });
+  }
+
+  /* Selector de años para el árbol: activo navy, cerrados lima, bloqueados candado */
+  function arbolSelector(actual, anioActual) {
+    return '<div class="selector-anios arbol-selector">' +
+      [1, 2, 3, 4].map(function (n) {
+        var activo = n === actual;
+        var bloqueado = n > anioActual;
+        var cerrado = n < anioActual || (n === anioActual && n !== actual);
+        var cls = "pill-anio pill-anio-arbol" + (activo ? " activo" : bloqueado ? " bloqueado" : cerrado ? " cerrado" : "");
+        var inner = (bloqueado ? U.icono("candado") : "") + '<span class="pill-num">' + n + "º año</span>";
+        return bloqueado
+          ? '<span class="' + cls + '" aria-disabled="true">' + inner + "</span>"
+          : '<a href="arbol.html?anio=' + n + '" class="' + cls + '"' + (activo ? ' aria-current="true"' : "") + ">" + inner + "</a>";
+      }).join("") + "</div>";
+  }
+
+  /* ============================================================
+     PÁGINA: Agenda (agenda.html?etapa=cbc|carrera) — regla 3
+     ============================================================ */
+  function pageAgenda() {
+    var etapa = qs("etapa") || (E.get().etapa === "cbc" ? "cbc" : "carrera");
+    var anio = E.get().anioActual;
+    pintarEtapa(etapa, etapa === "carrera" ? anio : null);
+
+    var sub, data;
+    if (etapa === "cbc") {
+      sub = "CBC · Ciclo Básico Común";
+      data = {
+        mes: "Marzo 2026",
+        semana: [{ d: 9 }, { d: 10, on: 1 }, { d: 11, on: 1 }, { d: 12, on: 1 }, { d: 13 }, { d: 14 }, { d: 15 }],
+        eventos: [
+          { fecha: "10 al 19", mes: "MAR", titulo: "Inscripción general", sub: "Tu primera inscripción", destacado: true },
+          { fecha: "30", mes: "ABR", titulo: "Inicio 1er cuatrimestre", sub: "Arrancan las clases" },
+          { fecha: "4 y 5", mes: "MAY", titulo: "Inscripción a mesas", sub: "Exámenes del 11 al 22" }
+        ]
+      };
+    } else {
+      sub = anio + "º año · " + D.CARRERA.anios[anio - 1].ciclo;
+      data = D.AGENDA_ANIOS[anio];
+    }
+
+    var letras = ["L", "M", "M", "J", "V", "S", "D"];
+    var semana = '<div class="semana">' + data.semana.map(function (dia, i) {
+      return '<div class="dia-sem' + (dia.on ? " on" : "") + '">' +
+        '<span class="dia-letra">' + letras[i] + "</span>" +
+        '<span class="dia-num">' + dia.d + "</span></div>";
+    }).join("") + "</div>";
+
+    var eventos = data.eventos.map(function (ev) {
+      return '<div class="evento' + (ev.destacado ? " destacado" : "") + '">' +
+        '<span class="evento-fecha">' + U.esc(ev.fecha) + "<br>" + U.esc(ev.mes) + "</span>" +
+        '<div class="evento-info"><div class="t-base-fuerte">' + U.esc(ev.titulo) + "</div>" +
+        (ev.sub ? '<div class="t-chico muted">' + U.esc(ev.sub) + "</div>" : "") + "</div></div>";
+    }).join("");
+
+    U.montarApp(APP(), {
+      header:
+        '<header class="app-header cabecera-seccion"><div class="t-display-l">Agenda</div>' +
+        '<div class="t-chico muted" style="margin-top:2px">' + U.esc(sub) + "</div></header>",
+      main:
+        '<div class="agenda-mes"><span class="t-h3">' + U.esc(data.mes) + "</span>" +
+        '<span class="agenda-flechas">' + U.icono("atras") + U.icono("chevron") + "</span></div>" +
+        semana +
+        '<h2 class="t-h2" style="margin:24px 0 14px">Próximas fechas</h2>' +
+        '<div class="stack-12">' + eventos + "</div>",
+      nav: { etapa: etapa === "cbc" ? "cbc" : "carrera", activo: "agenda", anio: anio }
+    });
+  }
+
+  /* ============================================================
+     PÁGINA: Plan de estudios (plan.html?etapa=) — regla 3
+     ============================================================ */
+  function pagePlan() {
+    var etapa = qs("etapa") || (E.get().etapa === "cbc" ? "cbc" : "carrera");
+    var anio = E.get().anioActual;
+    pintarEtapa(etapa, etapa === "carrera" ? anio : null);
+
+    var cuerpo;
+    if (etapa === "cbc") {
+      var aprobCbc = E.aprobadasCBC();
+      cuerpo =
+        '<div class="callout callout-anio"><div class="texto"><strong>El Ciclo Básico Común</strong><br>' +
+        "Siete materias cuatrimestrales (y Taller de Dibujo, anual). Al aprobarlas entrás a Diseño Gráfico.</div></div>" +
+        '<div class="plan-cat" style="margin-top:16px"><div class="plan-cat-top">' +
+        '<span class="t-base-fuerte">Materias del CBC</span><span class="t-chico muted">' + aprobCbc + " de 7</span></div>" +
+        '<div class="barra"><div class="relleno" style="width:' + Math.round((aprobCbc / 7) * 100) + '%"></div></div></div>' +
+        '<div class="lista-materias" style="margin-top:16px">' +
+        D.CBC.materias.map(function (m) {
+          return U.filaMateria(m, E.estadoMateria(m.id), {
+            href: m.enMuestra ? "materia.html?etapa=cbc&id=" + m.id : null,
+            atenuada: !m.enMuestra, mostrarChip: false, meta: m.cursada
+          });
+        }).join("") + "</div>";
+    } else {
+      var pd = D.PLAN_ANIOS[anio];
+      var cats = pd.cats.map(function (c) {
+        var pct = c.t > 0 ? Math.round((c.h / c.t) * 100) : 0;
+        return '<div class="plan-cat"><div class="plan-cat-top">' +
+          '<span class="t-base-fuerte">' + U.esc(c.n) + "</span>" +
+          '<span class="t-chico muted">' + c.h + " de " + c.t + "</span></div>" +
+          '<div class="barra"><div class="relleno" style="width:' + pct + '%"></div></div></div>';
+      }).join("");
+      cuerpo =
+        '<div class="callout callout-anio"><div class="texto"><strong class="t-h3" style="display:block;margin-bottom:4px">' +
+        U.esc(pd.titulo) + "</strong>" + U.esc(pd.texto) + "</div></div>" +
+        '<div class="stack-12" style="margin-top:16px">' + cats + "</div>" +
+        '<div class="callout callout-lavanda" style="margin-top:16px"><div class="texto">' +
+        '<strong>La regla del plan DG 2022</strong><br>' + U.esc(D.PLAN_REGLA) + "</div></div>";
+    }
+
+    U.montarApp(APP(), {
+      header: U.headerAtras("Mi plan"),
+      main: cuerpo,
+      nav: { etapa: etapa === "cbc" ? "cbc" : "carrera", activo: "plan", anio: anio }
+    });
+  }
+
+  /* ============================================================
+     PÁGINA: Perfil (perfil.html?etapa=) — regla 3
+     ============================================================ */
+  function pagePerfil() {
+    var est = E.get();
+    var etapa = qs("etapa") || est.etapa;
+    var anio = est.anioActual;
+    pintarEtapa(etapa === "cbc" ? "cbc" : (etapa === "graduado" ? "graduado" : "carrera"),
+                etapa === "carrera" ? anio : null);
+
+    var resumen, navEtapa, activo;
+    if (etapa === "cbc") {
+      resumen = resumenProgreso("CBC", E.aprobadasCBC(), D.CBC.total);
+      navEtapa = "cbc"; activo = "perfil";
+    } else if (etapa === "graduado") {
+      resumen = resumenProgreso("Carrera", 33, 33);
+      navEtapa = "graduado"; activo = "perfil";
+    } else {
+      var aprobGlobal = D.CARRERA.anios[anio - 1].baseAprobadas + E.aprobadasAnio(anio);
+      resumen = resumenProgreso(anio + "º año", aprobGlobal, 33);
+      navEtapa = "carrera"; activo = "perfil";
+    }
+
+    var catedra = est.catedraDiseno
+      ? '<div class="dato"><span class="k">Cátedra de Diseño</span><span class="v">' + U.esc(est.catedraDiseno) + "</span></div>"
+      : "";
+
+    U.montarApp(APP(), {
+      header: '<header class="app-header"><div class="t-h1">Perfil</div></header>',
+      main:
+        '<div class="center" style="padding:8px 0 20px">' +
+        '<div class="avatar" style="margin:0 auto 12px;width:88px;height:88px;font-size:32px">JP</div>' +
+        '<div class="t-h2">' + U.esc(est.nombre) + "</div>" +
+        '<div class="t-chico muted">Diseño Gráfico · FADU</div></div>' +
+        resumen +
+        '<div class="card" style="margin-top:16px">' +
+        '<div class="dato"><span class="k">Legajo</span><span class="v">' + U.esc(est.legajo) + "</span></div>" +
+        '<div class="dato"><span class="k">Facultad</span><span class="v">FADU · UBA</span></div>' +
+        '<div class="dato"><span class="k">Plan</span><span class="v">2022</span></div>' +
+        catedra +
+        "</div>" +
+        botonReiniciar(),
+      nav: { etapa: navEtapa, activo: activo, anio: anio }
+    });
+    cablearReiniciar();
+  }
+
+  function resumenProgreso(etiqueta, hechas, total) {
+    return '<div class="card-acento" style="display:flex;align-items:center;gap:16px">' +
+      U.anillo(hechas, total, "") +
+      '<div class="stack-4"><div class="t-caption">TU PROGRESO EN ' + U.esc(etiqueta.toUpperCase()) + "</div>" +
+      '<div class="t-h2">' + hechas + " de " + total + "</div>" +
+      '<div class="t-chico">materias aprobadas</div></div></div>';
+  }
+
+  /* ============================================================
+     PÁGINA: Quedar libre (quedar-libre.html?id=) — CL1/CL2/CL3
+     ============================================================ */
+  function pageQuedarLibre() {
+    var id = qs("id");
+    var info = D.buscarMateria(id);
+    if (!info) { go("recorrido.html"); return; }
+    var m = info.materia, etapa = info.etapa, anio = info.anio;
+    pintarEtapa(etapa, etapa === "carrera" ? anio : null);
+    var navCfg = etapa === "cbc" ? { etapa: "cbc", activo: "materias" }
+                                  : { etapa: "carrera", activo: "progreso", anio: anio };
+    var paso = qs("paso") || "1";
+
+    if (paso === "1") return cl1();
+    if (paso === "2") return cl2();
+    if (paso === "3") return cl3();
+
+    function cl1() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          '<div class="t-h1">¿Dejás de cursar ' + U.esc(m.codigo) + "?</div>" +
+          '<p class="t-base muted" style="margin:8px 0 20px">Antes de confirmar, mirá qué implica.</p>' +
+          '<div class="card" style="border-left:4px solid var(--c-magenta);margin-bottom:12px">' +
+          '<div class="t-h3" style="color:var(--c-magenta)">Vas a quedar libre</div>' +
+          '<p class="t-chico muted" style="margin-top:8px">Perdés la regularidad de la cursada. ' +
+          "No es lo mismo que desaprobar el final: ahí la cursada sigue valiendo.</p></div>" +
+          '<div class="callout">' + U.icono("info") +
+          '<span class="texto">Después vas a poder <strong>rendir libre</strong> o <strong>recursar</strong> ' +
+          "la materia (con la misma cátedra u otra).</span></div>",
+        cta:
+          '<button class="btn btn-peligro" id="confirmar" style="margin-bottom:10px">Sí, dejar de cursar</button>' +
+          '<button class="btn btn-secundario" id="cancelar">No, seguir cursando</button>',
+        nav: navCfg
+      });
+      el("confirmar").onclick = function () { E.quedarLibre(id); go("quedar-libre.html?id=" + id + "&paso=2"); };
+      el("cancelar").onclick = function () { history.back(); };
+    }
+
+    function cl2() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          '<div class="card-acento" style="text-align:center;background:var(--c-pastel-rosa)">' +
+          '<div class="emoji" style="font-size:40px">📄</div>' +
+          '<div class="t-h2" style="color:var(--c-magenta)">Quedaste libre en ' + U.esc(m.codigo) + "</div>" +
+          '<p class="t-chico" style="margin-top:6px">Elegí cómo seguir.</p></div>' +
+          '<div class="stack-12" style="margin-top:16px">' +
+          caminoCard("Rendir libre", "Preparás toda la materia y la rendís en una mesa de examen, sin cursar de nuevo.", "libro", "rendir") +
+          caminoCard("Volver a cursar", "Te reinscribís y cursás de nuevo, con la misma cátedra u otra.", "arbol", "recursar") +
+          "</div>",
+        nav: navCfg
+      });
+      el("via-rendir").onclick = function () { E.empezarCursada(id); go("materia.html?etapa=" + etapa + "&id=" + id); };
+      el("via-recursar").onclick = function () { go("quedar-libre.html?id=" + id + "&paso=3"); };
+    }
+
+    function cl3() {
+      U.montarApp(APP(), {
+        header: U.headerAtras(m.codigo),
+        main:
+          '<div class="t-h1">Volver a cursar</div>' +
+          '<p class="t-base muted" style="margin:8px 0 20px">' +
+          (etapa === "carrera" && m.area === "diseno"
+            ? "En Diseño podés seguir con tu cátedra vertical o cambiarte."
+            : "Elegí con qué cátedra o comisión recursás.") + "</p>" +
+          '<div class="stack-12">' +
+          caminoCard("Misma " + (etapa === "cbc" ? "comisión" : "cátedra"),
+            "Seguís donde estabas. Es lo más común.", "persona", "misma") +
+          caminoCard("Elegir otra", "Volvés a elegir " + (etapa === "cbc" ? "sede y turno" : "cátedra") + ".", "lupa", "otra") +
+          "</div>",
+        nav: navCfg
+      });
+      el("via-misma").onclick = function () {
+        var dm = E.datosMateria(id);
+        E.recursar(id, dm.catedra || dm.comision || null);
+        go("materia.html?etapa=" + etapa + "&id=" + id);
+      };
+      el("via-otra").onclick = function () { go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); };
+    }
+
+    function caminoCard(titulo, texto, icn, via) {
+      return '<button class="card" id="via-' + via + '" style="display:flex;gap:14px;align-items:center;text-align:left;width:100%">' +
+        '<span style="flex:0 0 auto;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;' +
+        'background:var(--acento-suave)">' + U.icono(icn) + "</span>" +
+        '<span class="info" style="flex:1"><span class="t-base-fuerte" style="display:block">' + U.esc(titulo) + "</span>" +
+        '<span class="t-chico muted">' + U.esc(texto) + "</span></span>" +
+        '<span class="chevron">' + U.icono("chevron") + "</span></button>";
+    }
+  }
+
+  /* ============================================================
+     PÁGINA: Título — graduado (titulo.html?tab=)
+     ============================================================ */
+  function pageTitulo() {
+    var est = E.get();
+    pintarEtapa("graduado");
+    var tab = qs("tab");
+
+    if (tab === "tramite") return tramite();
+    return inicio();
+
+    function inicio() {
+      U.montarApp(APP(), {
+        header:
+          '<header class="app-header"><div style="flex:1"><div class="t-caption muted">03 · TÍTULO Y POSGRADO</div>' +
+          '<div class="t-h1">Juan, sos<br>diseñador gráfico</div></div></header>',
+        main:
+          '<div class="hero-etapa" style="text-align:center"><div class="emoji" style="font-size:48px">🎓</div>' +
+          '<div class="t-h2">¡Te recibiste!</div>' +
+          '<p class="t-chico" style="opacity:.9;margin-top:6px">Aprobaste las 33 materias del Plan 2022. ' +
+          "Lo que sigue es el trámite del título.</p></div>" +
+          '<div class="stack-12">' +
+          enlaceCard("Tramitar el título", "100% online. Instructivos de solicitud y de pago.", "diploma", "titulo.html?tab=tramite") +
+          enlaceCard("Posgrados de FADU", "14 maestrías y 19 especializaciones.", "libro", "posgrado.html") +
+          "</div>",
+        nav: { etapa: "graduado", activo: "inicio" }
+      });
+    }
+
+    function tramite() {
+      var t = D.TITULO;
+      U.montarApp(APP(), {
+        header: U.headerAtras("Trámite del título"),
+        main:
+          '<div class="callout" style="margin-bottom:16px">' + U.icono("info") +
+          '<span class="texto">El trámite es <strong>100% online</strong>. FADU publica un instructivo de ' +
+          "solicitud y uno de pago.</span></div>" +
+          '<div class="card" style="margin-bottom:12px"><div class="t-h3">Contacto</div>' +
+          '<div class="dato"><span class="k">Mail</span><span class="v">' + U.esc(t.contacto) + "</span></div>" +
+          '<div class="dato"><span class="k">Oficina</span><span class="v" style="max-width:180px">' + U.esc(t.oficina) + "</span></div></div>" +
+          '<div class="card-pendiente"><div class="encabezado">' + U.icono("alerta") + "Falta confirmar</div>" +
+          "<p class=\"t-chico\">FADU no publica la lista completa de pasos del trámite. " +
+          "No los inventamos: seguí el instructivo oficial.</p></div>",
+        nav: { etapa: "graduado", activo: "titulo" }
+      });
+    }
+
+    function enlaceCard(titulo, texto, icn, href) {
+      return '<a class="card" href="' + href + '" style="display:flex;gap:14px;align-items:center">' +
+        '<span style="flex:0 0 auto;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;' +
+        'background:var(--acento-suave)">' + U.icono(icn) + "</span>" +
+        '<span class="info" style="flex:1"><span class="t-base-fuerte" style="display:block">' + U.esc(titulo) + "</span>" +
+        '<span class="t-chico muted">' + U.esc(texto) + "</span></span>" +
+        '<span class="chevron">' + U.icono("chevron") + "</span></a>";
+    }
+  }
+
+  /* ============================================================
+     PÁGINA: Posgrados (posgrado.html?ficha=1)
+     ============================================================ */
+  function pagePosgrado() {
+    pintarEtapa("graduado"); // navbar azul como en el prototipo
+    var v = qs("v");
+    if (v === "inscripcion") return inscripcion();
+    if (v === "aranceles")   return aranceles();
+    if (v === "contacto")    return contacto();
+    if (v === "cursada")     return cursada();
+    if (v === "seminarios")  return seminarios();
+    if (v === "final")       return final();
+    return ficha();
+
+    /* Helpers de posgrado */
+    function chipLav(txt) { return '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta)">' + U.esc(txt) + "</span>"; }
+    function linkCard(titulo, sub, href) {
+      return '<a class="selector-card" href="' + href + '" style="border-color:var(--c-n200);margin-top:0">' +
+        '<span class="info"><span class="t-base-fuerte">' + U.esc(titulo) + "</span>" +
+        (sub ? '<span class="t-chico muted">' + U.esc(sub) + "</span>" : "") + "</span>" +
+        '<span class="chevron">' + U.icono("chevron") + "</span></a>";
+    }
+    function linkColor(bg, iconBg, icn, eyebrow, titulo, href) {
+      return '<a class="pg-link" href="' + href + '" style="background:var(' + bg + ')">' +
+        '<span class="pg-link-ic" style="background:var(' + iconBg + ')">' + U.icono(icn) + "</span>" +
+        '<span class="info"><span class="t-caption muted">' + U.esc(eyebrow) + "</span>" +
+        '<span class="t-base-fuerte">' + U.esc(titulo) + "</span></span>" +
+        '<span class="chevron">' + U.icono("chevron") + "</span></a>";
+    }
+    function itemNum(n, titulo, sub, color) {
+      return '<div class="paso-item"><span class="paso-num" style="background:var(' + (color || "--c-lavanda") + ')">' + n + "</span>" +
+        '<div class="info"><div class="t-base-fuerte">' + U.esc(titulo) + "</div>" +
+        (sub ? '<div class="t-chico muted">' + U.esc(sub) + "</div>" : "") + "</div></div>";
+    }
+
+    /* ---------- D4 · Ficha de la especialización ---------- */
+    function ficha() {
+      U.montarApp(APP(), {
+        header: U.headerAtras("Posgrado"),
+        main:
+          '<h1 class="t-h1">Diseño y Gestión de Marcas y Sistemas de Identidad</h1>' +
+          '<div class="chips-row">' + chipLav("Especialización") + chipLav("FADU") + chipLav("Posgrado") + "</div>" +
+          '<div class="card-oscura"><div class="t-h3" style="color:var(--c-blanco)">Por qué te puede servir</div>' +
+          '<p class="t-chico" style="opacity:.85;margin-top:8px">Es la continuación más directa si lo que más te ' +
+          "gustó de la carrera fue la marca: identidad, sistemas, normativa y gestión del diseño.</p></div>" +
+          '<h2 class="t-h3" style="margin:22px 0 12px">Dónde informarte</h2>' +
+          '<div class="stack-12">' +
+          linkCard("Inscripciones de posgrado", "Ciclo lectivo vigente", "posgrado.html?v=inscripcion") +
+          linkCard("Aranceles y bonificaciones", "", "posgrado.html?v=aranceles") +
+          linkCard("Contacto de Posgrado", "Cursada y requisitos", "posgrado.html?v=contacto") +
+          "</div>" +
+          '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Confirmá antes de decidir</div>" +
+          "<p class=\"t-chico\">Programa, cupos y fechas los fija la Secretaría de Posgrado cada año. " +
+          "Esta ficha es una guía, no el reglamento oficial.</p></div>",
+        cta: '<a class="btn btn-primario" href="posgrado.html?v=cursada">Ya me inscribí · ver mi cursada</a>',
+        nav: { etapa: "graduado", activo: "posgrados" }
+      });
+    }
+
+    /* ---------- D5 · Inscripción ---------- */
+    function inscripcion() {
+      var items = [
+        { t: "Ficha de inscripción firmada", s: "Se descarga del sitio de Posgrado" },
+        { t: "Normas de la Secretaría firmadas", s: "" },
+        { t: "Una foto 4×4", s: "Original" },
+        { t: "Fotocopia del DNI", s: "" },
+        { t: "Dos fotocopias A4 del título", s: "Legalizadas sólo por Rectorado UBA" }
+      ];
+      U.montarApp(APP(), {
+        header: U.headerAtras("Dónde informarte"),
+        main:
+          '<h1 class="t-h1">Cómo me inscribo</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 18px">Especialización en Diseño y Gestión de marcas ' +
+          "y sistemas de identidad</p>" +
+          '<div class="card-oscura" style="background:var(--c-violeta)"><div class="row" style="gap:10px;margin-bottom:8px">' +
+          '<span style="color:var(--c-blanco)">' + U.icono("calendario") + "</span>" +
+          '<span class="t-h3" style="color:var(--c-blanco)">La inscripción abre en marzo</span></div>' +
+          '<p class="t-chico" style="opacity:.85">El cierre lo fija Posgrado cada año. Activá el aviso y te llega cuando abra.</p></div>' +
+          '<h2 class="t-h3" style="margin:22px 0 12px">Lo que tenés que llevar</h2>' +
+          '<div class="stack-12">' +
+          items.map(function (it, i) { return itemNum(i + 1, it.t, it.s); }).join("") + "</div>",
+        nav: { etapa: "graduado", activo: "posgrados" }
+      });
+    }
+
+    /* ---------- D6 · Aranceles ---------- */
+    function aranceles() {
+      var bonos = [
+        { t: "Graduados de la UBA", s: "Suele haber una bonificación sobre el arancel general." },
+        { t: "Docentes de la FADU", s: "Con cargo vigente en la facultad." },
+        { t: "Becas de posgrado", s: "La UBA y la FADU abren convocatorias." }
+      ];
+      U.montarApp(APP(), {
+        header: U.headerAtras("Dónde informarte"),
+        main:
+          '<h1 class="t-h1">Aranceles y bonificaciones</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 18px">Cómo se paga una especialización de FADU.</p>' +
+          '<div class="card-oscura" style="background:var(--c-violeta)"><div class="t-base-fuerte" style="color:var(--c-blanco);margin-bottom:12px">La cuenta tiene dos partes</div>' +
+          '<div class="pg-subcard"><div class="t-base-fuerte">Matrícula</div><div class="t-chico muted">Se paga una vez, al inscribirte</div></div>' +
+          '<div class="pg-subcard" style="margin-top:10px"><div class="t-base-fuerte">Cuotas</div><div class="t-chico muted">Mensuales, durante la cursada</div></div></div>' +
+          '<h2 class="t-h3" style="margin:22px 0 12px">Quiénes pagan menos</h2>' +
+          '<div class="stack-12">' +
+          bonos.map(function (b) {
+            return '<div class="pg-bono"><span class="pg-bono-check">' + U.icono("check") + "</span>" +
+              '<div class="info"><div class="t-base-fuerte">' + U.esc(b.t) + "</div>" +
+              '<div class="t-chico muted">' + U.esc(b.s) + "</div></div></div>";
+          }).join("") + "</div>" +
+          '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Falta confirmar</div>" +
+          "<p class=\"t-chico\">Los montos cambian por cuatrimestre. No los inventamos: los publica la Secretaría de Posgrado.</p></div>",
+        nav: { etapa: "graduado", activo: "posgrados" }
+      });
+    }
+
+    /* ---------- D7 · Contacto ---------- */
+    function contacto() {
+      var f = D.FADU;
+      U.montarApp(APP(), {
+        header: U.headerAtras("Dónde informarte"),
+        main:
+          '<h1 class="t-h1">Hablar con Posgrado</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 18px">Secretaría de Posgrado · FADU UBA</p>' +
+          '<div class="stack-12">' +
+          linkColor("--c-lavanda", "--c-blanco", "mail", "Escribir un mail", "Dirección en el sitio oficial", "posgrado.html?v=contacto") +
+          linkColor("--c-pastel-celeste", "--c-blanco", "pin", "Ir en persona", "Pabellón III, Ciudad Universitaria", "posgrado.html?v=contacto") +
+          linkColor("--c-pastel-amarillo", "--c-blanco", "enlace", "Sitio de Posgrado", "Programas, fechas y aranceles", "posgrado.html?v=contacto") +
+          "</div>" +
+          '<div class="card-oscura" style="margin-top:16px"><div class="t-h3" style="color:var(--c-blanco)">Cómo llegar</div>' +
+          '<p class="t-chico" style="opacity:.8;margin:8px 0 12px">' + U.esc(f.direccion) + "</p>" +
+          '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
+          f.colectivos.slice(0, 6).map(function (c) {
+            return '<span class="chip" style="background:var(--c-blanco);color:var(--c-navy)">' + c + "</span>";
+          }).join("") + "</div>" +
+          '<p class="t-chico" style="opacity:.8">Tren Belgrano Norte, estación Ciudad Universitaria.</p></div>',
+        nav: { etapa: "graduado", activo: "posgrados" }
+      });
+    }
+
+    /* ---------- D8 · Mi cursada (profesional) ---------- */
+    function cursada() {
+      U.montarApp(APP(), {
+        header:
+          '<header class="app-header header-dash"><div class="dash-titulos">' +
+          '<div class="t-chico muted">Hola, Juan</div><div class="t-h1">Mi posgrado</div></div>' +
+          '<button class="btn-campana" type="button" aria-label="Notificaciones">' + U.icono("campana") + "</button></header>",
+        main:
+          '<div class="hero-etapa" style="background:var(--c-violeta);color:var(--c-blanco)">' +
+          '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta);margin-bottom:12px">Cohorte 2026</span>' +
+          '<div class="t-h2">Especialización en Diseño y Gestión de marcas</div>' +
+          '<div class="row-between" style="margin:16px 0 8px"><span class="t-base-fuerte">5 de 9 seminarios</span>' +
+          '<span class="t-base-fuerte">56%</span></div>' +
+          '<div class="barra"><div class="relleno" style="width:56%;background:var(--c-lima)"></div></div></div>' +
+          '<div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:12px">' +
+          '<span class="evento-fecha" style="background:var(--c-pastel-amarillo)">04</span>' +
+          '<div><div class="t-chico muted">Próxima clase · miércoles</div>' +
+          '<div class="t-base-fuerte">Seminario 6 · 19 a 22 h</div></div></div>' +
+          '<div class="stack-12">' +
+          linkColor("--c-lavanda", "--c-blanco", "diploma", "Mis seminarios", "5 aprobados · 1 cursando", "posgrado.html?v=seminarios") +
+          linkColor("--c-pastel-coral", "--c-blanco", "plan", "Trabajo Final Integrador", "Sin empezar", "posgrado.html?v=final") +
+          linkColor("--c-pastel-lima", "--c-blanco", "check", "Cuotas", "Al día", "posgrado.html?v=cursada") +
+          "</div>",
+        nav: { etapa: "posgradoCursada", activo: "cursada" }
+      });
+    }
+
+    /* ---------- D9 · Seminarios ---------- */
+    function seminarios() {
+      var sem = [
+        { n: 1, bloque: "formacion", estado: "aprobada", nota: "9" },
+        { n: 2, bloque: "formacion", estado: "aprobada", nota: "8" },
+        { n: 3, bloque: "formacion", estado: "aprobada", nota: "9" },
+        { n: 4, bloque: "especializacion", estado: "aprobada", nota: "8" },
+        { n: 5, bloque: "especializacion", estado: "aprobada", nota: "10" },
+        { n: 6, bloque: "especializacion", estado: "cursando" },
+        { n: 7, bloque: "especializacion", estado: "no-inscripta" },
+        { n: 8, bloque: "especializacion", estado: "no-inscripta" },
+        { n: 9, bloque: "especializacion", estado: "no-inscripta" }
+      ];
+      function filaSem(s) {
+        var glifo = s.estado === "aprobada" ? "check" : s.estado === "cursando" ? "reloj" : "punto";
+        var meta = s.estado === "aprobada" ? "Aprobado · " + s.nota :
+                   s.estado === "cursando" ? "Cursando" : "Pendiente";
+        return '<div class="fila-materia" style="box-shadow:none;background:var(--c-blanco);border:1.5px solid var(--c-n200)">' +
+          '<span class="glifo" data-estado="' + s.estado + '">' + U.icono(glifo) + "</span>" +
+          '<span class="info"><span class="nombre">Seminario ' + s.n + "</span>" +
+          '<span class="metarow"><span class="meta">' + meta + "</span></span></span></div>";
+      }
+      var form = sem.filter(function (s) { return s.bloque === "formacion"; });
+      var esp = sem.filter(function (s) { return s.bloque === "especializacion"; });
+      U.montarApp(APP(), {
+        header: U.headerAtras("Mi posgrado"),
+        main:
+          '<h1 class="t-h1">Mis seminarios</h1>' +
+          '<div class="row-between" style="margin:12px 0 10px"><span class="t-base-fuerte">5 de 9 aprobados</span>' +
+          '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta)">Cohorte 2026</span></div>' +
+          '<div class="barra" style="background:var(--c-n200);margin-bottom:22px"><div class="relleno" style="width:56%;background:var(--c-violeta)"></div></div>' +
+          '<div class="t-caption muted" style="margin-bottom:10px">BLOQUE DE FORMACIÓN</div>' +
+          '<div class="stack-12">' + form.map(filaSem).join("") + "</div>" +
+          '<div class="t-caption muted" style="margin:22px 0 10px">BLOQUE DE ESPECIALIZACIÓN</div>' +
+          '<div class="stack-12">' + esp.map(filaSem).join("") + "</div>",
+        nav: { etapa: "posgradoCursada", activo: "seminarios" }
+      });
+    }
+
+    /* ---------- D10 · Trabajo Final Integrador ---------- */
+    function final() {
+      var pasos = [
+        { t: "Elegir el tema y el director", s: "Un docente de la carrera dirige el trabajo." },
+        { t: "Presentar el plan", s: "Se entrega en Posgrado para su aprobación." },
+        { t: "Escribirlo", s: "Con el seguimiento de tu director." },
+        { t: "Defenderlo", s: "Ante un jurado de la especialización." }
+      ];
+      U.montarApp(APP(), {
+        header: U.headerAtras("Mi posgrado"),
+        main:
+          '<h1 class="t-h1">Trabajo Final Integrador</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 18px">Es lo último que te separa del título de especialista.</p>' +
+          '<div class="callout" style="background:var(--c-pastel-coral);color:var(--c-navy)">' +
+          '<span style="color:var(--c-coral)">' + U.icono("alerta") + "</span>" +
+          '<span class="texto"><strong>Todavía no lo empezaste.</strong> Podés presentar el tema cuando tengas ' +
+          "aprobados 6 de los 9 seminarios. Te falta uno.</span></div>" +
+          '<h2 class="t-h3" style="margin:22px 0 12px">Los cuatro pasos</h2>' +
+          '<div class="stack-12">' +
+          pasos.map(function (p, i) { return itemNum(i + 1, p.t, p.s, "--c-n200"); }).join("") + "</div>",
+        nav: { etapa: "posgradoCursada", activo: "final" }
+      });
+    }
+  }
+
+  /* Selección simple en un grupo de .fila-opcion: marca una, atenúa
+     las demás y habilita el CTA. onConfirm corre al tocar el CTA. */
+  function cablearSeleccionSimple(grupoId, ctaId, onConfirm) {
+    var grupo = el(grupoId);
+    var cta = el(ctaId);
+    if (!grupo || !cta) return;
+    var elegido = null;
+    grupo.querySelectorAll(".fila-opcion[data-i]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        grupo.querySelectorAll(".fila-opcion").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        grupo.classList.add("con-eleccion");
+        elegido = b.getAttribute("data-i");
+        cta.disabled = false;
+        cta.setAttribute("aria-disabled", "false");
+      });
+    });
+    cta.onclick = function () { if (elegido !== null) onConfirm(elegido); };
+  }
+
+  /* ============================================================
+     Reinicio de demo (compartido)
+     ============================================================ */
+  function botonReiniciar() {
+    return '<button class="btn btn-fantasma t-chico" id="reiniciar" ' +
+      'style="min-height:40px;margin-top:24px;color:var(--c-n500)">Reiniciar progreso (demo)</button>';
+  }
+  function cablearReiniciar() {
+    var b = el("reiniciar");
+    if (b) b.onclick = function () {
+      if (confirm("¿Reiniciar todo el progreso de la demo?")) { E.reiniciar(); go("../index.html"); }
+    };
+  }
+
+  /* ============================================================
+     Dispatcher
+     ============================================================ */
+  var PAGES = {
+    onboarding: pageOnboarding,
+    recorrido: pageRecorrido,
+    cbc: pageCBC,
+    "cbc-materias": pageCBCMaterias,
+    materia: pageMateria,
+    carrera: pageCarrera,
+    arbol: pageArbol,
+    agenda: pageAgenda,
+    plan: pagePlan,
+    perfil: pagePerfil,
+    "quedar-libre": pageQuedarLibre,
+    titulo: pageTitulo,
+    posgrado: pagePosgrado
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var page = document.body.getAttribute("data-page");
+    if (PAGES[page]) PAGES[page]();
+  });
+
+  window.APP_HELPERS = { qs: qs, go: go, pintarEtapa: pintarEtapa, botonReiniciar: botonReiniciar, cablearReiniciar: cablearReiniciar };
+})();
