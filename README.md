@@ -1,7 +1,9 @@
-# UBA App — Diseño Gráfico (FADU, Plan 2022)
+# UBA+ App — Diseño Gráfico (FADU, Plan 2022)
 
 App móvil de gestión y seguimiento del progreso académico para estudiantes de la UBA.
 Prototipo de Figma llevado a **HTML clásico, sin frameworks**. Equipo VN12 · Cátedra Ocampo · DGPC · FADU UBA.
+
+**Demo en vivo:** https://jcdominguez-blip.github.io/UBAplus-APP/
 
 > El detalle completo del proyecto está en `../CONTEXTO-UBA-APP.md`.
 
