@@ -17,9 +17,11 @@
   color: var(--c-navy);
   text-align: left;
   box-shadow: var(--sombra-card);
-  transition: transform 0.12s ease;
+  transition: transform 0.1s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
-.fila-materia:active { transform: scale(0.985); }
+.fila-materia:active { transform: scale(0.985) translateZ(0); }
 
 .fila-materia .glifo {
   flex: 0 0 auto;
@@ -141,9 +143,13 @@
   font-weight: 600;
   font-size: 16px;
   line-height: 1.2;
-  transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+  transition: transform 0.1s ease, opacity 0.12s ease, background 0.12s ease;
+  /* Capa de composición propia: al escalar en :active el texto no se
+     rerasteriza por frame, así se evita el temblequeo del botón. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
-.btn:active { transform: scale(0.98); }
+.btn:active { transform: scale(0.98) translateZ(0); }
 .btn svg { width: 20px; height: 20px; }
 
 .btn-primario {
@@ -864,8 +870,10 @@
   font-weight: 500;
   color: var(--c-navy);
   transition: transform 0.1s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
-.tag:active { transform: scale(0.96); }
+.tag:active { transform: scale(0.96) translateZ(0); }
 .tag[aria-pressed="true"] { border-color: transparent; font-weight: 600; }
 .tag[data-color="lima"]    { background: var(--c-lima); }
 .tag[data-color="naranja"] { background: var(--c-naranja); }
