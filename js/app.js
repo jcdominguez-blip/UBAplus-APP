@@ -371,6 +371,35 @@
       '<span class="chevron" style="color:var(--c-n400)">' + U.icono(icn || "enlace") + "</span></div>";
   }
 
+  /* Hoja de notificaciones (ícono de campana) */
+  function abrirNotificaciones() {
+    if (document.querySelector(".hoja-overlay")) return; // evita duplicados
+    var overlay = document.createElement("div");
+    overlay.className = "hoja-overlay";
+    overlay.innerHTML =
+      '<div class="hoja" role="dialog" aria-label="Notificaciones">' +
+      '<div class="asa"></div>' +
+      '<div class="t-h2" style="margin-bottom:16px">Notificaciones</div>' +
+      '<div class="noti-item">' +
+      '<span class="noti-ic">' + U.icono("calendario") + "</span>" +
+      '<div class="info"><div class="t-base-fuerte">Se abre una mesa de examen</div>' +
+      '<div class="t-chico muted" style="margin-top:2px">Inscribite el 4 y 5 de mayo. Los exámenes van del 11 al 22.</div>' +
+      '<div class="t-caption muted" style="margin-top:6px">Hace 2 h</div></div></div>' +
+      '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:20px">Listo</button>' +
+      "</div>";
+    overlayHost().appendChild(overlay);
+    // apaga el puntito rojo de la campana
+    var punto = document.querySelector(".punto-noti");
+    if (punto) punto.style.display = "none";
+    requestAnimationFrame(function () { overlay.classList.add("abierta"); });
+    function cerrar() { overlay.classList.remove("abierta"); setTimeout(function () { overlay.remove(); }, 260); }
+    el("cerrar-hoja").onclick = cerrar;
+    // Diferido: evita que un evento final del gesto de apertura la cierre al toque
+    setTimeout(function () {
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) cerrar(); });
+    }, 120);
+  }
+
   /* ============================================================
      PÁGINA: Hub de recorrido (recorrido.html)
      ============================================================ */
@@ -1652,6 +1681,10 @@
   document.addEventListener("DOMContentLoaded", function () {
     var page = document.body.getAttribute("data-page");
     if (PAGES[page]) PAGES[page]();
+    // La campana (en cualquier pantalla) abre las notificaciones
+    document.addEventListener("click", function (e) {
+      if (e.target.closest(".btn-campana")) abrirNotificaciones();
+    });
   });
 
   window.APP_HELPERS = { qs: qs, go: go, pintarEtapa: pintarEtapa, botonReiniciar: botonReiniciar, cablearReiniciar: cablearReiniciar };

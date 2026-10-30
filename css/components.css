@@ -806,6 +806,29 @@
   margin: 6px auto 16px;
 }
 
+/* Item de notificación (hoja de la campana) */
+.noti-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--c-pastel-lima);
+  color: var(--c-navy);
+}
+.noti-item .noti-ic {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--c-blanco);
+  color: var(--c-navy);
+}
+.noti-item .noti-ic svg { width: 22px; height: 22px; }
+.noti-item .info { flex: 1 1 auto; min-width: 0; }
+
 /* ============================================================
    13b. ONBOARDING
    ============================================================ */
