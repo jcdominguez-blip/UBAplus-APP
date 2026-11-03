@@ -7,7 +7,21 @@
    En mobile, el .app ocupa todo el viewport.
    ------------------------------------------------------------ */
 /* La app se ve SIEMPRE como un mockup de celular, centrado en un fondo. */
-html { height: 100%; }
+/* overflow:hidden también en html: garantiza que el viewport nunca tenga
+   barra de scroll (que al aparecer/desaparecer recentraba el teléfono). */
+html { height: 100%; overflow: hidden; }
+
+/* ------------------------------------------------------------
+   Transición de entrada de cada pantalla.
+   Como cada pantalla es una página aparte (recarga completa), el mockup
+   hace un fundido de entrada suave al montarse. Es sólo opacidad —sin
+   desplazamiento— para que no se perciba ningún "salto" al cambiar de
+   página. Se desactiva con prefers-reduced-motion.
+   ------------------------------------------------------------ */
+@keyframes pantalla-entra {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 body {
   display: flex;
   justify-content: center;
@@ -49,6 +63,10 @@ body {
   border-radius: 46px;
   box-shadow: 0 30px 80px rgba(11, 13, 51, 0.32);
   overflow: hidden;
+  animation: pantalla-entra 0.2s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app { animation: none; }
 }
 
 /* ------------------------------------------------------------
