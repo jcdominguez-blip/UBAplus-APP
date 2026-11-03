@@ -816,18 +816,22 @@
     /* ---------- b/b2) Selección de comisión o cátedra ---------- */
     function vistaSeleccion() {
       var esCBC = etapa === "cbc";
-      // Cátedra vertical de Diseño ya fijada (DG2–DG4): no deja elegir
-      var verticalFija = !esCBC && m.seleccionCatedra === "vertical" && E.get().catedraDiseno;
+      var cambiar = qs("cambiar");
+      // Cátedra vertical de Diseño ya fijada (DG2–DG4): no deja elegir...
+      // salvo que vengas en modo "cambiar" (te inscribiste a otra cátedra).
+      var verticalFija = !esCBC && m.seleccionCatedra === "vertical" && E.get().catedraDiseno && !cambiar;
 
       if (verticalFija) return vistaVertical();
 
       var opciones = esCBC ? m.comisiones : m.catedras;
-      var titulo = esCBC ? "Elegí tu comisión" : "Elegí tu cátedra";
+      var titulo = esCBC ? "Elegí tu comisión" : (cambiar ? "Cambiar de cátedra" : "Elegí tu cátedra");
       var sub = esCBC
         ? "En el CBC se elige sede y turno."
-        : (m.id === "dg1"
-            ? "Ojo: la cátedra que elijas en Diseño Gráfico I te acompaña hasta Diseño Gráfico IV."
-            : "Las cátedras se agrupan por turno. Los nombres salen del listado oficial de FADU.");
+        : (cambiar
+            ? "Elegí la cátedra en la que te inscribiste. La cadena de Diseño va a seguir con esta."
+            : (m.id === "dg1"
+                ? "Ojo: la cátedra que elijas en Diseño Gráfico I te acompaña hasta Diseño Gráfico IV."
+                : "Las cátedras se agrupan por turno. Los nombres salen del listado oficial de FADU."));
 
       var filasHTML = opciones.map(function (o, i) {
         var titu = esCBC ? o.sede : o.nombre;
@@ -907,16 +911,36 @@
               ';color:' + (activo ? "var(--c-blanco)" : "var(--c-n600)") + '">' + c.toUpperCase() + "</span>" +
               (i < 3 ? '<span class="muted">→</span>' : "");
           }).join("") + "</div>" +
-          '<div class="callout">' + U.icono("info") +
-          '<span class="texto"><strong>¿Me puedo cambiar?</strong> Sí, pero hay que pedirlo en la cátedra ' +
-          "y no siempre hay lugar. La mayoría sigue con la misma hasta DG4.</span></div>",
-        cta: '<button class="btn btn-etapa" id="inscribirme">Registrar en mi seguimiento</button>',
+          '<div class="callout callout-lavanda" style="margin-bottom:12px">' + U.icono("info") +
+          '<span class="texto"><strong>¿Me puedo cambiar?</strong> Sí, y no hace falta pedirlo ' +
+          "en la cátedra. Sólo tené en cuenta dos cosas.</span></div>" +
+          '<div class="stack-12" style="margin-bottom:16px">' +
+          itemCambio(1, "La cátedra a la que quieras pasarte puede no tener cupo.") +
+          itemCambio(2, "Tenés que anotarte en la fecha de la inscripción general.") +
+          "</div>" +
+          '<div class="callout">' + U.icono("enlace") +
+          '<span class="texto">Te recomendamos seguir con tu cátedra, pero si te inscribiste a otra ' +
+          "podés ajustarlo acá. Recordá que esto es una <strong>herramienta de seguimiento</strong>, " +
+          "no de inscripción.</span></div>",
+        cta:
+          '<button class="btn btn-etapa" id="inscribirme" style="margin-bottom:10px">Seguir con esta cátedra</button>' +
+          '<button class="btn btn-secundario" id="cambiar">Me inscribí a otra cátedra</button>',
         nav: navCfg
       });
       el("inscribirme").onclick = function () {
         E.inscribir(id, cat);
         go("materia.html?etapa=" + etapa + "&id=" + id);
       };
+      el("cambiar").onclick = function () {
+        go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion&cambiar=1");
+      };
+    }
+
+    /* Item numerado para las salvedades de cambio de cátedra */
+    function itemCambio(n, texto) {
+      return '<div class="card" style="display:flex;gap:12px;align-items:flex-start">' +
+        '<span class="jerga-num" style="flex:0 0 auto;background:var(--acento-anio,var(--c-azul))">' + n + "</span>" +
+        '<p class="t-chico" style="margin:0">' + U.esc(texto) + "</p></div>";
     }
 
     /* ---------- c) Inscripta ---------- */

@@ -104,8 +104,9 @@
       patch.comision = seleccion;
     } else {
       patch.catedra = seleccion;
-      // Regla 3: la cátedra de Diseño se fija en DG1 y se arrastra
-      if (id === "dg1" && !estado.catedraDiseno) {
+      // Regla 3: la cátedra de Diseño es vertical. La que elegís —en DG1 o al
+      // cambiarte más adelante— pasa a ser la cátedra de la cadena de ahí en más.
+      if (info && info.materia && info.materia.area === "diseno") {
         estado.catedraDiseno = seleccion;
       }
     }
