@@ -21,11 +21,45 @@
     { nombre: "Ex Wolkowicz",       turno: "Noche"  }
   ];
 
-  /* Cátedras genéricas por turno para materias que no son Diseño */
-  var CATEDRAS_GENERICAS = [
-    { nombre: "Cátedra A", turno: "Mañana" },
-    { nombre: "Cátedra B", turno: "Tarde"  },
-    { nombre: "Cátedra C", turno: "Noche"  }
+  /* Cátedras reales por disciplina para las materias que no son Diseño.
+     Se nombran por el titular de la cátedra, como en FADU. Son nombres
+     realistas a modo de referencia: se ajustan a los titulares exactos de
+     cada ciclo lectivo. */
+  var CATEDRAS_TIPOGRAFIA = [
+    { nombre: "Cosgaya",    turno: "Mañana" },
+    { nombre: "Pérez Tort", turno: "Tarde"  },
+    { nombre: "Gaudio",     turno: "Noche"  }
+  ];
+  var CATEDRAS_MORFOLOGIA = [
+    { nombre: "Wainhaus",   turno: "Mañana" },
+    { nombre: "Pueyo",      turno: "Tarde"  },
+    { nombre: "Grispo",     turno: "Noche"  }
+  ];
+  var CATEDRAS_COMUNICACION = [
+    { nombre: "Sexe",       turno: "Mañana" },
+    { nombre: "Ledesma",    turno: "Tarde"  },
+    { nombre: "Arfuch",     turno: "Noche"  }
+  ];
+  var CATEDRAS_HISTORIA = [
+    { nombre: "Devalle",    turno: "Mañana" },
+    { nombre: "Gené",       turno: "Tarde"  },
+    { nombre: "Bruno",      turno: "Noche"  }
+  ];
+  var CATEDRAS_MEDIOS = [
+    { nombre: "Crespo",     turno: "Mañana" },
+    { nombre: "Vitale",     turno: "Tarde"  },
+    { nombre: "Roldán",     turno: "Noche"  }
+  ];
+  var CATEDRAS_LEGISLACION = [
+    { nombre: "Vibes",      turno: "Mañana" },
+    { nombre: "Palazzi",    turno: "Tarde"  },
+    { nombre: "Robledo",    turno: "Noche"  }
+  ];
+  /* Electivas, optativas y seminarios: se eligen por oferta/tema del año. */
+  var CATEDRAS_ELECTIVAS = [
+    { nombre: "Maldonado",  turno: "Mañana" },
+    { nombre: "Ríos",       turno: "Tarde"  },
+    { nombre: "Torres",     turno: "Noche"  }
   ];
 
   /* ============================================================
@@ -151,12 +185,12 @@
 
   /* Materia extra del año (no troncal): registrable y sujeta al tope, pero no
      marca el pasaje de año. Da cuerpo a la grilla para ver el tope de 4. */
-  function materiaExtra(id, codigo, nombre, evalTipo, descripcion) {
+  function materiaExtra(id, codigo, nombre, evalTipo, descripcion, catedras) {
     return {
       id: id, codigo: codigo, nombre: nombre, cursada: "Anual", horas: "60 hs",
       area: "teorico", evalTipo: evalTipo || "parcial", enMuestra: false,
       correlativas: [], habilita: [], promocionDirecta: true,
-      seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+      seleccionCatedra: "turnos", catedras: catedras || CATEDRAS_ELECTIVAS,
       descripcion: descripcion,
       evaluacion: evalTipo === "taller"
         ? "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
@@ -179,19 +213,19 @@
           {
             id: "tip1", codigo: "TIP1", nombre: "Tipografía I", cursada: "Anual", horas: "90 hs",
             area: "teorico", evalTipo: "taller", enMuestra: true, correlativas: [], habilita: ["tip2"], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_TIPOGRAFIA,
             descripcion: "Primera materia específica de tipografía: anatomía de la letra, familias y composición de texto.",
             evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "m1", codigo: "M1", nombre: "Morfología I", cursada: "Anual", horas: "90 hs",
             area: "teorico", evalTipo: "taller", enMuestra: true, correlativas: [], habilita: ["m2"], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_MORFOLOGIA,
             descripcion: "Estudio de la forma, el espacio y la percepción visual aplicados al diseño.",
             evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
-          materiaExtra("c1", "C1", "Comunicación I", "parcial", "Teorías de la comunicación aplicadas al diseño: emisor, mensaje y audiencia."),
-          materiaExtra("h1", "H1", "Historia I", "parcial", "Panorama histórico del diseño y la cultura visual, del siglo XIX a hoy.")
+          materiaExtra("c1", "C1", "Comunicación I", "parcial", "Teorías de la comunicación aplicadas al diseño: emisor, mensaje y audiencia.", CATEDRAS_COMUNICACION),
+          materiaExtra("h1", "H1", "Historia I", "parcial", "Panorama histórico del diseño y la cultura visual, del siglo XIX a hoy.", CATEDRAS_HISTORIA)
         ]
       },
       {
@@ -201,19 +235,19 @@
           {
             id: "tip2", codigo: "TIP2", nombre: "Tipografía II", cursada: "Anual", horas: "90 hs",
             area: "teorico", evalTipo: "taller", enMuestra: true, correlativas: ["tip1"], habilita: [], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_TIPOGRAFIA,
             descripcion: "Tipografía aplicada a sistemas, editorial y pantalla.",
             evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "m2", codigo: "M2", nombre: "Morfología II", cursada: "Anual", horas: "90 hs",
             area: "teorico", evalTipo: "taller", enMuestra: true, correlativas: ["m1"], habilita: [], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_MORFOLOGIA,
             descripcion: "Morfología aplicada a estructuras tridimensionales y sistemas visuales.",
             evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
-          materiaExtra("c2", "C2", "Comunicación II", "parcial", "Comunicación aplicada a campañas y sistemas de mensajes."),
-          materiaExtra("h2", "H2", "Historia II", "parcial", "Historia del diseño gráfico argentino y latinoamericano.")
+          materiaExtra("c2", "C2", "Comunicación II", "parcial", "Comunicación aplicada a campañas y sistemas de mensajes.", CATEDRAS_COMUNICACION),
+          materiaExtra("h2", "H2", "Historia II", "parcial", "Historia del diseño gráfico argentino y latinoamericano.", CATEDRAS_HISTORIA)
         ]
       },
       {
@@ -223,19 +257,19 @@
           {
             id: "me2", codigo: "ME2", nombre: "Medios Expresivos II", cursada: "Anual", horas: "90 hs",
             area: "teorico", evalTipo: "taller", enMuestra: true, correlativas: [], habilita: [], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_MEDIOS,
             descripcion: "Recursos expresivos y técnicas de representación para proyectos de diseño.",
             evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "leg", codigo: "LEG", nombre: "Legislación", cursada: "Cuatrimestral", horas: "60 hs",
             area: "teorico", evalTipo: "parcial", enMuestra: true, correlativas: [], habilita: [], promocionDirecta: false,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_LEGISLACION,
             descripcion: "Marco legal del ejercicio profesional: derechos de autor, propiedad intelectual y contratos.",
             evaluacion: "Dos parciales teóricos y final obligatorio."
           },
-          materiaExtra("c3", "C3", "Comunicación III", "parcial", "Comunicación estratégica y análisis de públicos para proyectos de marca."),
-          materiaExtra("h3", "H3", "Historia III", "parcial", "Movimientos contemporáneos y debates actuales del diseño.")
+          materiaExtra("c3", "C3", "Comunicación III", "parcial", "Comunicación estratégica y análisis de públicos para proyectos de marca.", CATEDRAS_COMUNICACION),
+          materiaExtra("h3", "H3", "Historia III", "parcial", "Movimientos contemporáneos y debates actuales del diseño.", CATEDRAS_HISTORIA)
         ]
       },
       {
@@ -245,14 +279,14 @@
           {
             id: "eo1", codigo: "EO1", nombre: "Electiva Orientada I", cursada: "Cuatrimestral", horas: "60 hs",
             area: "electiva", evalTipo: "final", enMuestra: true, correlativas: [], habilita: [], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_ELECTIVAS,
             descripcion: "Materia electiva: elegís un recorte temático dentro de la oferta de la carrera.",
             evaluacion: "Trabajo final según la cátedra elegida."
           },
           {
             id: "eo2", codigo: "EO2", nombre: "Electiva Orientada II", cursada: "Cuatrimestral", horas: "60 hs",
             area: "electiva", evalTipo: "final", enMuestra: true, correlativas: [], habilita: [], promocionDirecta: true,
-            seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
+            seleccionCatedra: "turnos", catedras: CATEDRAS_ELECTIVAS,
             descripcion: "Segunda electiva orientada. Es la última materia del plan: al aprobarla te recibís.",
             evaluacion: "Trabajo final según la cátedra elegida.",
             ultima: true

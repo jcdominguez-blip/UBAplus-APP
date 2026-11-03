@@ -403,15 +403,20 @@
         '<span class="chip chip-dato">' + U.esc(h.hs) + "</span>" +
         '<span class="chip chip-dato">' + U.esc(h.dias) + "</span>" +
       "</div>" +
-      '<div class="card" style="margin-bottom:16px"><div class="t-h3" style="margin-bottom:12px">Cursarías acá cuatro años</div>' +
-        '<div class="row" style="gap:6px;flex-wrap:wrap">' +
-        cadena.map(function (c) {
-          var activo = c === codigoBase;
-          return '<span class="chip" style="min-height:40px;padding:8px 16px;background:' +
-            (activo ? "var(--c-navy)" : "var(--c-n200)") + ";color:" + (activo ? "var(--c-blanco)" : "var(--c-n600)") + '">' + c + "</span>";
-        }).join("") + "</div>" +
-        '<p class="t-chico muted" style="margin-top:12px">En esta cátedra, DG4 cursa los ' +
-        (cat.turno === "Noche" ? "jueves" : cat.turno === "Tarde" ? "jueves" : "miércoles") + ".</p></div>" +
+      (materia && materia.area === "diseno"
+        ? '<div class="card" style="margin-bottom:16px"><div class="t-h3" style="margin-bottom:12px">Cursarías acá cuatro años</div>' +
+          '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+          cadena.map(function (c) {
+            var activo = c === codigoBase;
+            return '<span class="chip" style="min-height:40px;padding:8px 16px;background:' +
+              (activo ? "var(--c-navy)" : "var(--c-n200)") + ";color:" + (activo ? "var(--c-blanco)" : "var(--c-n600)") + '">' + c + "</span>";
+          }).join("") + "</div>" +
+          '<p class="t-chico muted" style="margin-top:12px">En esta cátedra, DG4 cursa los ' +
+          (cat.turno === "Noche" ? "jueves" : cat.turno === "Tarde" ? "jueves" : "miércoles") + ".</p></div>"
+        : '<div class="card" style="margin-bottom:16px"><div class="t-h3" style="margin-bottom:8px">Sobre la cátedra</div>' +
+          '<p class="t-chico muted">Cursás ' + U.esc(materia ? materia.nombre : "esta materia") + " con la cátedra " +
+          U.esc(cat.nombre) + ", en turno " + U.esc(cat.turno.toLowerCase()) +
+          ". Es una materia independiente: la elegís por única vez, no es vertical.</p></div>") +
       '<div class="t-h3" style="margin-bottom:10px">Dónde encontrarla</div>' +
       '<div class="stack-12">' +
         enlaceExterno("Sitio web", slug, "enlace") +
