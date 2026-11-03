@@ -29,69 +29,101 @@
   ];
 
   /* ============================================================
-     CBC — Ciclo Básico Común (7 materias, 3 en la muestra)
+     CBC — Ciclo Básico Común de Diseño Gráfico (7 materias, 4 en la muestra).
+     Composición verificada: Proyectual I y II + Taller de Dibujo (específicas),
+     Filosofía y Matemática (orientación DG/Arq), ICSE e IPC (comunes).
+     Se cursan hasta 4 materias por cuatrimestre (tope del CBC).
      ============================================================ */
   var CBC = {
     id: "cbc",
     nombre: "Ciclo Básico Común",
     color: "lima",
     total: 7,
+    topeCuatrimestre: 4,
     materias: [
       {
         id: "icp1", codigo: "ICP I", nombre: "Intr. al Conocimiento Proyectual I",
         corto: "Conocimiento Proyectual I", cursada: "Cuatrimestral", horas: "8 hs semanales",
-        enMuestra: true,
+        enMuestra: true, evalTipo: "taller",
         descripcion: "Es el taller del CBC: la primera materia en la que vas a proyectar. Se trabaja con ejercicios prácticos y la corrección es en clase, así que la asistencia pesa.",
-        evaluacion: "Dos parciales prácticos. Aprobás con 4 en cada uno y promocionás con 7. Si desaprobás uno hay recuperatorio.",
+        evaluacion: "No lleva parciales: se cursa con tres trabajos prácticos —uno al inicio, uno a mitad de cuatrimestre y una entrega final integradora—. La carpeta y la asistencia son parte de la nota. Promocionás con 7.",
         comisiones: [
           { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Lunes y miércoles" },
           { sede: "Ciudad Universitaria", turno: "Turno noche",  dias: "Martes y jueves" },
-          { sede: "Drago",                turno: "Turno tarde",  dias: "Lunes y miércoles" },
+          { sede: "San Isidro",           turno: "Turno tarde",  dias: "Lunes y miércoles" },
           { sede: "Paternal",             turno: "Turno mañana", dias: "Martes y jueves" }
         ]
       },
       {
-        id: "icp2", codigo: "ICP II", nombre: "Intr. al Conocimiento Proyectual II",
-        corto: "Conocimiento Proyectual II", cursada: "Cuatrimestral", horas: "8 hs semanales",
-        enMuestra: false
+        id: "td", codigo: "TD", nombre: "Taller de Dibujo",
+        corto: "Taller de Dibujo", cursada: "Anual", horas: "4 hs semanales",
+        enMuestra: true, evalTipo: "taller",
+        descripcion: "La única materia anual del CBC. Se dibuja todas las clases y la carpeta de trabajos es parte de la evaluación. Es la antesala de los talleres de la carrera. En Diseño Gráfico sólo se dicta en Ciudad Universitaria y San Isidro.",
+        evaluacion: "No lleva parciales: son tres entregas de trabajos prácticos a lo largo del año —inicial, de mitad de año y una final—, más la carpeta completa. Promocionás con 7.",
+        comisiones: [
+          { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Lunes y miércoles" },
+          { sede: "Ciudad Universitaria", turno: "Turno tarde",  dias: "Martes y jueves" },
+          { sede: "San Isidro",           turno: "Turno noche",  dias: "Lunes y miércoles" }
+        ]
       },
       {
         id: "ipc", codigo: "IPC", nombre: "Intr. al Pensamiento Científico",
         corto: "Pensamiento Científico", cursada: "Cuatrimestral", horas: "4 hs semanales",
-        enMuestra: true,
+        enMuestra: true, evalTipo: "parcial",
         descripcion: "Materia teórica común a todas las carreras de la UBA. Te da herramientas para leer textos, argumentar y distinguir ciencia de lo que no lo es.",
         evaluacion: "Dos parciales teóricos. Aprobás con 4 y promocionás con 7. Hay recuperatorio por parcial.",
         comisiones: [
-          { sede: "Ramos Mejía", turno: "Turno mañana", dias: "Lunes y miércoles" },
-          { sede: "Puan",        turno: "Turno tarde",  dias: "Martes y jueves" },
-          { sede: "Drago",       turno: "Turno noche",  dias: "Lunes y miércoles" }
+          { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Lunes y miércoles" },
+          { sede: "San Isidro",           turno: "Turno tarde",  dias: "Martes y jueves" },
+          { sede: "Avellaneda",           turno: "Turno noche",  dias: "Lunes y miércoles" }
         ]
       },
       {
         id: "icse", codigo: "ICSE", nombre: "Intr. al Conoc. de la Sociedad y el Estado",
         corto: "Sociedad y Estado", cursada: "Cuatrimestral", horas: "4 hs semanales",
-        enMuestra: false
+        enMuestra: true, evalTipo: "parcial",
+        descripcion: "Materia teórica común de la UBA. Mira cómo se formaron el Estado argentino y la sociedad en la que vas a ejercer como diseñador.",
+        evaluacion: "Dos parciales teóricos. Aprobás con 4 y promocionás con 7. Hay recuperatorio por parcial.",
+        comisiones: [
+          { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Martes y jueves" },
+          { sede: "San Isidro",           turno: "Turno tarde",  dias: "Lunes y miércoles" },
+          { sede: "Avellaneda",           turno: "Turno noche",  dias: "Martes y jueves" }
+        ]
+      },
+      {
+        id: "icp2", codigo: "ICP II", nombre: "Intr. al Conocimiento Proyectual II",
+        corto: "Conocimiento Proyectual II", cursada: "Cuatrimestral", horas: "8 hs semanales",
+        enMuestra: false, evalTipo: "taller",
+        descripcion: "La continuación del taller proyectual. Se encadena con Proyectual I y profundiza los ejercicios de composición y forma.",
+        evaluacion: "No lleva parciales: tres trabajos prácticos —inicial, de proceso y entrega final—. Promocionás con 7.",
+        comisiones: [
+          { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Lunes y miércoles" },
+          { sede: "San Isidro",           turno: "Turno tarde",  dias: "Martes y jueves" },
+          { sede: "Paternal",             turno: "Turno noche",  dias: "Lunes y miércoles" }
+        ]
+      },
+      {
+        id: "fil", codigo: "FIL", nombre: "Filosofía",
+        corto: "Filosofía", cursada: "Cuatrimestral", horas: "4 hs semanales",
+        enMuestra: false, evalTipo: "parcial",
+        descripcion: "Es la materia de orientación del CBC para Diseño Gráfico y Arquitectura. Introduce las grandes preguntas del pensamiento y te da herramientas para fundamentar tus proyectos.",
+        evaluacion: "Dos parciales teóricos. Aprobás con 4 y promocionás con 7. Hay recuperatorio por parcial.",
+        comisiones: [
+          { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Martes y jueves" },
+          { sede: "San Isidro",           turno: "Turno tarde",  dias: "Lunes y miércoles" },
+          { sede: "Avellaneda",           turno: "Turno noche",  dias: "Martes y jueves" }
+        ]
       },
       {
         id: "mat", codigo: "MAT", nombre: "Matemática",
         corto: "Matemática", cursada: "Cuatrimestral", horas: "6 hs semanales",
-        enMuestra: false
-      },
-      {
-        id: "sem", codigo: "SEM", nombre: "Semiología",
-        corto: "Semiología", cursada: "Cuatrimestral", horas: "4 hs semanales",
-        enMuestra: false
-      },
-      {
-        id: "td", codigo: "TD", nombre: "Taller de Dibujo",
-        corto: "Taller de Dibujo", cursada: "Anual", horas: "4 hs semanales",
-        enMuestra: true,
-        descripcion: "La única materia anual del CBC. Se dibuja todas las clases y la carpeta de trabajos es parte de la evaluación. Es la antesala de los talleres de la carrera.",
-        evaluacion: "Entregas prácticas a lo largo del año y dos parciales. Aprobás con 4, promocionás con 7.",
+        enMuestra: false, evalTipo: "parcial",
+        descripcion: "La otra materia de orientación para Diseño Gráfico. Ordena las herramientas de cálculo y geometría que vas a reencontrar en Morfología.",
+        evaluacion: "Dos parciales. Aprobás con 4 y promocionás con 7. Hay recuperatorio por parcial.",
         comisiones: [
           { sede: "Ciudad Universitaria", turno: "Turno mañana", dias: "Lunes y miércoles" },
-          { sede: "Ciudad Universitaria", turno: "Turno tarde",  dias: "Martes y jueves" },
-          { sede: "Paternal",             turno: "Turno noche",  dias: "Lunes y miércoles" }
+          { sede: "San Isidro",           turno: "Turno noche",  dias: "Martes y jueves" },
+          { sede: "Avellaneda",           turno: "Turno tarde",  dias: "Lunes y miércoles" }
         ]
       }
     ]
@@ -103,14 +135,14 @@
   function materiaDiseno(id, codigo, nombre, habilita, correlativas, vertical) {
     return {
       id: id, codigo: codigo, nombre: nombre, cursada: "Anual", horas: "120 hs",
-      area: "diseno",
+      area: "diseno", evalTipo: "taller",
       correlativas: correlativas || [],
       habilita: habilita || [],
       promocionDirecta: true,
       seleccionCatedra: vertical ? "vertical" : "elegir",
       catedras: CATEDRAS_DISENO,
       descripcion: "Taller troncal de la carrera. La cátedra que elegís en Diseño Gráfico I te acompaña hasta Diseño Gráfico IV: es una cátedra vertical.",
-      evaluacion: "Entregas prácticas por cuatrimestre y una entrega final. Se promociona con 7; con 4 a 6 vas a final."
+      evaluacion: "No lleva parciales: tres trabajos prácticos por año —uno al arranque, uno de mitad de cursada y la entrega final integradora—. Se promociona con 7; con 4 a 6 vas a entrega final."
     };
   }
 
@@ -126,17 +158,17 @@
           materiaDiseno("dg1", "DG1", "Diseño Gráfico I", ["dg2"], [], false),
           {
             id: "tip1", codigo: "TIP1", nombre: "Tipografía I", cursada: "Anual", horas: "90 hs",
-            area: "teorico", correlativas: [], habilita: ["tip2"], promocionDirecta: true,
+            area: "teorico", evalTipo: "taller", correlativas: [], habilita: ["tip2"], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Primera materia específica de tipografía: anatomía de la letra, familias y composición de texto.",
-            evaluacion: "Trabajos prácticos y dos parciales. Promoción con 7."
+            evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "m1", codigo: "M1", nombre: "Morfología I", cursada: "Anual", horas: "90 hs",
-            area: "teorico", correlativas: [], habilita: ["m2"], promocionDirecta: true,
+            area: "teorico", evalTipo: "taller", correlativas: [], habilita: ["m2"], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Estudio de la forma, el espacio y la percepción visual aplicados al diseño.",
-            evaluacion: "Entregas prácticas y dos parciales. Promoción con 7."
+            evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           }
         ]
       },
@@ -146,17 +178,17 @@
           materiaDiseno("dg2", "DG2", "Diseño Gráfico II", ["dg3"], ["dg1"], true),
           {
             id: "tip2", codigo: "TIP2", nombre: "Tipografía II", cursada: "Anual", horas: "90 hs",
-            area: "teorico", correlativas: ["tip1"], habilita: [], promocionDirecta: true,
+            area: "teorico", evalTipo: "taller", correlativas: ["tip1"], habilita: [], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Tipografía aplicada a sistemas, editorial y pantalla.",
-            evaluacion: "Trabajos prácticos y dos parciales. Promoción con 7."
+            evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "m2", codigo: "M2", nombre: "Morfología II", cursada: "Anual", horas: "90 hs",
-            area: "teorico", correlativas: ["m1"], habilita: [], promocionDirecta: true,
+            area: "teorico", evalTipo: "taller", correlativas: ["m1"], habilita: [], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Morfología aplicada a estructuras tridimensionales y sistemas visuales.",
-            evaluacion: "Entregas prácticas y dos parciales. Promoción con 7."
+            evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           }
         ]
       },
@@ -166,14 +198,14 @@
           materiaDiseno("dg3", "DG3", "Diseño Gráfico III", ["dg4"], ["dg2"], true),
           {
             id: "me2", codigo: "ME2", nombre: "Medios Expresivos II", cursada: "Anual", horas: "90 hs",
-            area: "teorico", correlativas: [], habilita: [], promocionDirecta: true,
+            area: "teorico", evalTipo: "taller", correlativas: [], habilita: [], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Recursos expresivos y técnicas de representación para proyectos de diseño.",
-            evaluacion: "Entregas prácticas y dos parciales. Promoción con 7."
+            evaluacion: "Materia de taller: tres trabajos prácticos —inicial, de proceso y entrega final—. Promoción con 7."
           },
           {
             id: "leg", codigo: "LEG", nombre: "Legislación", cursada: "Cuatrimestral", horas: "60 hs",
-            area: "teorico", correlativas: [], habilita: [], promocionDirecta: false,
+            area: "teorico", evalTipo: "parcial", correlativas: [], habilita: [], promocionDirecta: false,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Marco legal del ejercicio profesional: derechos de autor, propiedad intelectual y contratos.",
             evaluacion: "Dos parciales teóricos y final obligatorio."
@@ -186,14 +218,14 @@
           materiaDiseno("dg4", "DG4", "Diseño Gráfico IV", [], ["dg3"], true),
           {
             id: "eo1", codigo: "EO1", nombre: "Electiva Orientada I", cursada: "Cuatrimestral", horas: "60 hs",
-            area: "electiva", correlativas: [], habilita: [], promocionDirecta: true,
+            area: "electiva", evalTipo: "final", correlativas: [], habilita: [], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Materia electiva: elegís un recorte temático dentro de la oferta de la carrera.",
             evaluacion: "Trabajo final según la cátedra elegida."
           },
           {
             id: "eo2", codigo: "EO2", nombre: "Electiva Orientada II", cursada: "Cuatrimestral", horas: "60 hs",
-            area: "electiva", correlativas: [], habilita: [], promocionDirecta: true,
+            area: "electiva", evalTipo: "final", correlativas: [], habilita: [], promocionDirecta: true,
             seleccionCatedra: "turnos", catedras: CATEDRAS_GENERICAS,
             descripcion: "Segunda electiva orientada. Es la última materia del plan: al aprobarla te recibís.",
             evaluacion: "Trabajo final según la cátedra elegida.",

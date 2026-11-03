@@ -17,6 +17,70 @@
   /* Host de overlays: el .app (position:relative), para cubrir sólo el teléfono */
   function overlayHost() { return document.querySelector(".app") || APP(); }
 
+  /* Fila de materia del seguimiento, con tope por cuatrimestre y correlatividad.
+     ambito: "cbc" o el número de año de la carrera. La materia se bloquea si le
+     falta una correlativa (bloqueadaCorrel) o si ya llegaste al tope de 4 y
+     todavía no la estás llevando. Las que ya anotaste/cursás/aprobaste no se tocan. */
+  function filaMateriaSeguimiento(m, ambito, opts) {
+    opts = opts || {};
+    var est = E.estadoMateria(m.id);
+    var registrada = est !== "no-inscripta";
+    var bloqCorrel = opts.bloqueadaCorrel === true;
+    var bloqTope = !registrada && !bloqCorrel && E.topeAlcanzado(ambito);
+    var bloqueada = bloqCorrel || bloqTope;
+    var meta;
+    if (bloqCorrel) meta = "Te falta la correlativa";
+    else if (bloqTope) meta = "Máximo " + E.TOPE_CUATRIMESTRE + " por cuatrimestre";
+    else {
+      var cuenta = (ambito === "cbc")
+        ? (m.comisiones ? m.comisiones.length + " comisiones" : null)
+        : (m.catedras ? m.catedras.length + " cátedras" : null);
+      meta = m.cursada + (cuenta ? " · " + cuenta : "");
+    }
+    var etapaQS = (ambito === "cbc") ? "cbc" : "carrera";
+    return U.filaMateria(m, est, {
+      href: bloqueada ? null : ("materia.html?etapa=" + etapaQS + "&id=" + m.id),
+      bloqueada: bloqueada,
+      codigoPrefijo: opts.codigoPrefijo === true,
+      meta: meta
+    });
+  }
+
+  /* Instancias de evaluación de una materia según su carácter (ajuste 4).
+     Taller → tres trabajos prácticos (inicio, mitad, final); teórica → parciales;
+     electiva → un trabajo final. */
+  function instanciasEvaluacion(m) {
+    var tipo = m.evalTipo || "parcial";
+    if (tipo === "taller") {
+      return {
+        titulo: "Trabajos prácticos",
+        nota: "Es una materia de taller: no lleva parciales. Se promociona con las tres entregas; la carpeta y la asistencia cuentan.",
+        instancias: [
+          { titulo: "TP1 · Inicio de cursada",        estadoTxt: "Entregado · 8", estadoCls: "aprobada" },
+          { titulo: "TP2 · Mitad de cursada",         estadoTxt: "En proceso",    estadoCls: "cursando" },
+          { titulo: "TP Final · Entrega integradora", estadoTxt: "Pendiente",     estadoCls: "no-inscripta" }
+        ]
+      };
+    }
+    if (tipo === "final") {
+      return {
+        titulo: "Evaluación",
+        nota: "Se aprueba con un trabajo final, según la cátedra que elijas.",
+        instancias: [
+          { titulo: "Trabajo final", estadoTxt: "Pendiente", estadoCls: "no-inscripta" }
+        ]
+      };
+    }
+    return {
+      titulo: "Parciales",
+      nota: "Aprobás con 4 en cada parcial y promocionás con 7. Si desaprobás uno, hay recuperatorio.",
+      instancias: [
+        { titulo: "1er parcial", estadoTxt: "Aprobado · 7", estadoCls: "aprobada" },
+        { titulo: "2do parcial", estadoTxt: "Pendiente",    estadoCls: "no-inscripta" }
+      ]
+    };
+  }
+
   /* Aplica la clase de etapa/año al <body> para que --acento se reescriba */
   function pintarEtapa(etapa, anio) {
     var b = document.body;
@@ -76,7 +140,8 @@
           '<figure class="onb-ilustracion"><img src="img/ilustracion.png" alt="" width="330" height="220"></figure>' +
           '<h1 class="t-display-l" style="margin-bottom:16px">Saliste del secundario. Y ahora, ¿qué?</h1>' +
           '<p class="t-base muted">La UBA tiene 13 facultades y más de cien carreras, y nadie te explicó cómo ' +
-          "funciona ninguna. Esta app te acompaña desde el primer día del CBC hasta el día que retirás tu título.</p>",
+          "funciona ninguna. Esta app te acompaña desde el primer día del CBC hasta el día que retirás tu título: " +
+          "es tu mapa para entender y seguir la carrera, no te inscribe a las materias.</p>",
         cta:
           '<button class="btn btn-etapa" id="cta">Dale, empecemos</button>' +
           '<p class="t-caption muted center" style="margin-top:10px">Son cuatro pantallas. Te lleva un minuto.</p>'
@@ -400,6 +465,46 @@
     }, 120);
   }
 
+  /* Pop-up de correlatividad: al aprobar una materia se habilita otra (ajuste 5).
+     Muestra la/s materia/s destrabada/s y recuerda que la carrera no es lineal. */
+  function mostrarPopupHabilita(materiaAprobada, habilitadas, onClose) {
+    var lista = habilitadas.map(function (x) {
+      var mm = x.materia;
+      var anioTxt = x.anio ? (x.anio + "º año") : "la carrera";
+      return '<div class="noti-item" style="background:var(--c-pastel-celeste)">' +
+        '<span class="noti-ic">' + U.icono("flecha") + "</span>" +
+        '<div class="info"><div class="t-base-fuerte">' + U.esc(mm.nombre) + "</div>" +
+        '<div class="t-chico muted" style="margin-top:2px">Se habilitó · ' + U.esc(anioTxt) + "</div></div></div>";
+    }).join("");
+
+    var overlay = document.createElement("div");
+    overlay.className = "hoja-overlay";
+    overlay.innerHTML =
+      '<div class="hoja" role="dialog" aria-label="Materia habilitada">' +
+      '<div class="asa"></div>' +
+      '<div class="popup-icono">' + U.icono("arbol") + "</div>" +
+      '<div class="t-h1" style="margin-bottom:6px">¡Desbloqueaste una materia!</div>' +
+      '<p class="t-chico muted" style="margin-bottom:16px">Al aprobar <strong>' + U.esc(materiaAprobada.nombre) +
+      "</strong> cumpliste la correlativa y se te habilitó:</p>" +
+      '<div class="stack-12">' + lista + "</div>" +
+      '<div class="callout callout-lavanda" style="margin-top:16px">' + U.icono("info") +
+      '<span class="texto">La carrera <strong>no es lineal</strong>: a medida que cumplís correlativas podés ir ' +
+      "cursando materias de años distintos.</span></div>" +
+      '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:16px">Entendido</button>' +
+      "</div>";
+    overlayHost().appendChild(overlay);
+    requestAnimationFrame(function () { overlay.classList.add("abierta"); });
+    function cerrar() {
+      overlay.classList.remove("abierta");
+      setTimeout(function () { overlay.remove(); if (onClose) onClose(); }, 260);
+    }
+    el("cerrar-hoja").onclick = cerrar;
+    // Diferido: evita que el gesto que abrió la hoja la cierre al toque
+    setTimeout(function () {
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) cerrar(); });
+    }, 120);
+  }
+
   /* ============================================================
      PÁGINA: Hub de recorrido (recorrido.html)
      ============================================================ */
@@ -443,7 +548,7 @@
       main:
         '<div class="stack-16">' +
         etapaCard({ num: "1", color: "--c-lima", titulo: "El CBC",
-          sub: cbcListo ? "7 materias · ¡las aprobaste todas!" : "7 materias · todavía no te anotaste a ninguna",
+          sub: cbcListo ? "7 materias · ¡las aprobaste todas!" : "7 materias · todavía no registraste ninguna",
           estado: cbcEstado, href: "cbc.html", abierta: true }) +
         etapaCard({ num: "2", color: "--c-azul", titulo: "La carrera", sub: "4 años · 33 materias y seminarios",
           estado: cbcListo ? '<span class="chip chip-inscripta">Disponible</span>' : '<span class="etapa-bloqueo">Se abre al terminar el CBC</span>',
@@ -455,6 +560,9 @@
         '<div class="callout callout-lavanda" style="margin-top:20px">' + U.icono("info") +
         '<span class="texto"><strong>Una etapa por vez.</strong> Cada etapa se abre cuando cerrás la anterior. ' +
         "Así no te marea todo junto desde el primer día.</span></div>" +
+        '<div class="callout" style="margin-top:12px">' + U.icono("enlace") +
+        '<span class="texto"><strong>No reemplaza al SIU Guaraní.</strong> Es tu mapa para seguir la carrera: ' +
+        "registrás lo que cursás y ves cómo vas. La inscripción oficial la seguís haciendo por el SIU.</span></div>" +
         botonReiniciar(),
       nav: null
     });
@@ -469,20 +577,22 @@
     if (E.get().etapa === "onboarding") E.empezarCBC();
     var aprob = E.aprobadasCBC();
     var cerrado = aprob >= D.CBC.total;
+    var tope = E.topeAlcanzado("cbc");
 
-    var filas = D.CBC.materias.map(function (m) {
-      var est = E.estadoMateria(m.id);
-      var cuenta = m.comisiones ? m.comisiones.length + " comisiones" : null;
-      return U.filaMateria(m, est, {
-        href: m.enMuestra ? "materia.html?etapa=cbc&id=" + m.id : null,
-        atenuada: !m.enMuestra,
-        meta: m.cursada + (m.enMuestra && cuenta ? " · " + cuenta : "")
-      });
-    }).join("");
+    var muestra = D.CBC.materias.filter(function (m) { return m.enMuestra; });
+    var otras   = D.CBC.materias.filter(function (m) { return !m.enMuestra; });
+    var filasMuestra = muestra.map(function (m) { return filaMateriaSeguimiento(m, "cbc"); }).join("");
+    var filasOtras   = otras.map(function (m) { return filaMateriaSeguimiento(m, "cbc"); }).join("");
 
     var helper = cerrado ? "¡Aprobaste las 7! Ya podés empezar la carrera." :
-                 aprob === 0 ? "Todavía no te anotaste a ninguna. Es el momento." :
+                 aprob === 0 ? "Todavía no registraste ninguna. Es el momento." :
                  "Seguí así, te faltan " + (D.CBC.total - aprob) + ".";
+
+    var avisoTope = (tope && !cerrado)
+      ? '<div class="callout" style="margin-bottom:16px">' + U.icono("alerta") +
+        '<span class="texto"><strong>Llegaste al máximo de ' + E.TOPE_CUATRIMESTRE + ' materias</strong> de este ' +
+        "cuatrimestre. Las demás se liberan cuando aprobás alguna de las que estás cursando.</span></div>"
+      : "";
 
     U.montarApp(APP(), {
       header: U.headerDashboard("Hola, Juan", "Etapa 1 · El CBC"),
@@ -494,13 +604,17 @@
         (cerrado
           ? '<button class="btn btn-primario" id="empezar-carrera" style="margin-bottom:20px">Empezar la carrera' + U.icono("flecha") + "</button>"
           : '<a class="btn btn-naranja" href="cbc-materias.html" style="margin-bottom:20px">' +
-            (aprob === 0 ? "Anotarme a mis primeras materias" : "Anotarme a más materias") + U.icono("flecha") + "</a>") +
+            (aprob === 0 ? "Registrar mis primeras materias" : "Registrar más materias") + U.icono("flecha") + "</a>") +
         '<div class="callout callout-celeste">' + U.icono("info") +
-        '<span class="texto"><strong>¿Cómo funciona el CBC?</strong> Son 7 materias. Te anotás eligiendo sede ' +
-        "y comisión, cursás, y cuando aprobás las 7 entrás a Diseño Gráfico.</span></div>" +
+        '<span class="texto"><strong>¿Cómo funciona el CBC?</strong> Son 7 materias y cursás hasta ' +
+        E.TOPE_CUATRIMESTRE + " por cuatrimestre. Elegís sede y comisión, registrás tu cursada acá para seguirla, " +
+        "y cuando aprobás las 7 entrás a Diseño Gráfico.</span></div>" +
         '<div class="seccion-titulo"><h2>Tus 7 materias</h2>' +
-        '<span class="conteo">3 en la muestra</span></div>' +
-        '<div class="lista-materias">' + filas + "</div>",
+        '<span class="conteo">Hasta ' + E.TOPE_CUATRIMESTRE + " por cuatrimestre</span></div>" +
+        avisoTope +
+        '<div class="lista-materias">' + filasMuestra + "</div>" +
+        '<div class="t-etiqueta muted" style="margin:18px 0 8px">Otras materias del CBC</div>' +
+        '<div class="lista-materias">' + filasOtras + "</div>",
       nav: { etapa: "cbc", activo: "progreso" }
     });
 
@@ -612,18 +726,14 @@
   function pageCBCMaterias() {
     pintarEtapa("cbc");
     var filas = D.CBC.materias.map(function (m) {
-      var est = E.estadoMateria(m.id);
-      return U.filaMateria(m, est, {
-        href: m.enMuestra ? "materia.html?etapa=cbc&id=" + m.id : null,
-        atenuada: !m.enMuestra
-      });
+      return filaMateriaSeguimiento(m, "cbc");
     }).join("");
 
     U.montarApp(APP(), {
       header: '<header class="app-header"><div class="t-h1">Materias del CBC</div></header>',
       main:
-        '<p class="t-base muted" style="margin-bottom:16px">Siete materias. Tres tienen el flujo completo ' +
-        'para que pruebes inscribirte, cursar y aprobar.</p>' +
+        '<p class="t-base muted" style="margin-bottom:16px">Siete materias. Registrás las que estás cursando ' +
+        "para seguir tu avance; llevás hasta " + E.TOPE_CUATRIMESTRE + " por cuatrimestre.</p>" +
         '<div class="lista-materias">' + filas + "</div>",
       nav: { etapa: "cbc", activo: "materias" }
     });
@@ -640,6 +750,7 @@
     var etapa = info.etapa;
     var anio = info.anio;
     var m = info.materia;
+    var ambito = etapa === "cbc" ? "cbc" : anio;
     pintarEtapa(etapa, anio);
 
     var est = E.estadoMateria(id);
@@ -666,6 +777,7 @@
       var cuenta = esCBC ? (m.comisiones ? m.comisiones.length : 0) : (m.catedras ? m.catedras.length : 0);
       var selTitulo = cuenta + (esCBC ? " comisiones" : " cátedras");
       var selSub = esCBC ? "Elegís sede y turno" : (m.id === "dg1" ? "Elegís tu cátedra vertical" : "Según el listado de FADU");
+      var topeBloq = E.topeAlcanzado(ambito);
 
       U.montarApp(APP(), {
         header: U.headerAtras(esCBC ? "Materia del CBC" : "Materia de " + anio + "º año"),
@@ -680,17 +792,25 @@
           '<p class="t-chico" style="margin-top:8px">' + U.esc(m.descripcion || "") + "</p></div>" +
           '<div class="card card-lima" style="margin-top:12px"><div class="t-h3">Cómo se aprueba</div>' +
           '<p class="t-chico" style="margin-top:8px">' + U.esc(m.evaluacion || "") + "</p></div>" +
-          '<button class="selector-card" id="ir-seleccion">' +
-            '<span class="sel-icono">' + U.icono(esCBC ? "pin" : "libro") + "</span>" +
-            '<span class="info"><span class="t-base-fuerte">' + U.esc(selTitulo) + "</span>" +
-            '<span class="t-chico muted">' + U.esc(selSub) + "</span></span>" +
-            '<span class="chevron">' + U.icono("chevron") + "</span></button>",
-        cta: '<button class="btn btn-primario" id="anotarme">Anotarme a la materia' + U.icono("flecha") + "</button>",
+          (topeBloq
+            ? '<div class="callout" style="margin-top:16px">' + U.icono("alerta") +
+              '<span class="texto">Ya estás llevando ' + E.TOPE_CUATRIMESTRE + " materias este cuatrimestre, " +
+              "el máximo. Aprobá alguna para poder sumar esta.</span></div>"
+            : '<button class="selector-card" id="ir-seleccion">' +
+              '<span class="sel-icono">' + U.icono(esCBC ? "pin" : "libro") + "</span>" +
+              '<span class="info"><span class="t-base-fuerte">' + U.esc(selTitulo) + "</span>" +
+              '<span class="t-chico muted">' + U.esc(selSub) + "</span></span>" +
+              '<span class="chevron">' + U.icono("chevron") + "</span></button>"),
+        cta: topeBloq
+          ? '<button class="btn btn-primario" disabled aria-disabled="true">Máximo ' + E.TOPE_CUATRIMESTRE + " por cuatrimestre</button>"
+          : '<button class="btn btn-primario" id="anotarme">Registrar esta materia' + U.icono("flecha") + "</button>",
         nav: navCfg
       });
-      function irSel() { go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); }
-      el("anotarme").onclick = irSel;
-      el("ir-seleccion").onclick = irSel;
+      if (!topeBloq) {
+        var irSel = function () { go("materia.html?etapa=" + etapa + "&id=" + id + "&vista=seleccion"); };
+        el("anotarme").onclick = irSel;
+        el("ir-seleccion").onclick = irSel;
+      }
     }
 
     /* ---------- b/b2) Selección de comisión o cátedra ---------- */
@@ -727,13 +847,16 @@
         header: U.headerAtras(m.codigo),
         main:
           '<div class="t-h1">' + U.esc(titulo) + "</div>" +
-          '<p class="t-base muted" style="margin:8px 0 20px">' + U.esc(sub) + "</p>" +
+          '<p class="t-base muted" style="margin:8px 0 14px">' + U.esc(sub) + "</p>" +
+          '<div class="callout callout-lavanda" style="margin-bottom:16px">' + U.icono("info") +
+          '<span class="texto">Esto <strong>registra tu elección</strong> para hacer el seguimiento. ' +
+          "La inscripción oficial la hacés por el SIU Guaraní.</span></div>" +
           (esCBC ? "" : noteFADU()) +
           '<div class="grupo-opciones stack-12" id="grupo-sel">' + filasHTML + "</div>",
         cta:
           '<div id="leyenda" class="t-caption muted center" style="margin-bottom:8px">' +
           "Elegí una " + (esCBC ? "comisión" : "cátedra") + " para continuar</div>" +
-          '<button class="btn btn-etapa" id="inscribirme" disabled aria-disabled="true">Inscribirme a la materia</button>',
+          '<button class="btn btn-etapa" id="inscribirme" disabled aria-disabled="true">Registrar en mi seguimiento</button>',
         nav: navCfg
       });
 
@@ -787,7 +910,7 @@
           '<div class="callout">' + U.icono("info") +
           '<span class="texto"><strong>¿Me puedo cambiar?</strong> Sí, pero hay que pedirlo en la cátedra ' +
           "y no siempre hay lugar. La mayoría sigue con la misma hasta DG4.</span></div>",
-        cta: '<button class="btn btn-etapa" id="inscribirme">Inscribirme a la materia</button>',
+        cta: '<button class="btn btn-etapa" id="inscribirme">Registrar en mi seguimiento</button>',
         nav: navCfg
       });
       el("inscribirme").onclick = function () {
@@ -806,11 +929,11 @@
           encabezadoMateria("inscripta") +
           '<div class="card-acento" style="margin-top:16px;display:flex;gap:12px;align-items:center">' +
           '<span class="check-estado" style="background:var(--c-navy);color:var(--c-blanco);width:36px;height:36px">' + U.icono("check") + "</span>" +
-          '<div><div class="t-base-fuerte">¡Quedaste inscripto!</div>' +
+          '<div><div class="t-base-fuerte">¡Anotada en tu seguimiento!</div>' +
           '<div class="t-chico muted">' + (etapa === "cbc" ? "Comisión" : "Cátedra") + ": " + U.esc(sel) + "</div></div></div>" +
           '<div class="card" style="margin-top:12px"><div class="t-h3">Lo que viene</div>' +
-          '<p class="t-chico muted" style="margin-top:8px">Cuando arranquen las clases vas a ver tus parciales acá. ' +
-          "Por ahora ya tenés tu lugar asegurado.</p></div>",
+          '<p class="t-chico muted" style="margin-top:8px">Guardamos tu ' + (etapa === "cbc" ? "comisión" : "cátedra") +
+          ". Cuando arranques las clases, pasala a <strong>Cursando</strong> y registrá tus entregas y notas acá.</p></div>",
         cta: '<button class="btn btn-etapa" id="cursar">Empezar a cursar' + U.icono("flecha") + "</button>",
         nav: navCfg
       });
@@ -824,18 +947,17 @@
 
     /* ---------- d) Cursando ---------- */
     function vistaCursando() {
+      var ev = instanciasEvaluacion(m);
       U.montarApp(APP(), {
         header: U.headerAtras(m.codigo),
         main:
           encabezadoMateria("cursando") +
-          '<div class="seccion-titulo"><h2>Parciales</h2></div>' +
+          '<div class="seccion-titulo"><h2>' + ev.titulo + "</h2></div>" +
           '<div class="stack-12">' +
-          parcialCard("1er parcial", "Aprobado · 7", "aprobada") +
-          parcialCard("2do parcial", "Pendiente", "no-inscripta") +
+          ev.instancias.map(function (i) { return parcialCard(i.titulo, i.estadoTxt, i.estadoCls); }).join("") +
           "</div>" +
           '<div class="callout" style="margin-top:16px">' + U.icono("info") +
-          '<span class="texto">Aprobás con 4 en cada parcial y promocionás con 7. ' +
-          "Si desaprobás uno, hay recuperatorio.</span></div>",
+          '<span class="texto">' + ev.nota + "</span></div>",
         cta:
           '<div class="row" style="gap:10px;margin-bottom:10px">' +
           '<button class="btn btn-etapa" id="aprobe" style="flex:1">La aprobé</button>' +
@@ -845,13 +967,19 @@
         nav: navCfg
       });
       el("aprobe").onclick = function () {
+        var destino = "materia.html?etapa=" + etapa + "&id=" + id;
         var hito = E.aprobar(id);
+        // ¿Esta aprobación destrabó alguna materia (de otro año)? (ajuste 5)
+        var habil = (etapa === "carrera") ? E.habilitadasAlAprobar(id) : [];
         if (hito) {
-          // Aprobó la 3ra del año/CBC: pantalla de transición animada
+          // Cerró el año/CBC: pantalla de transición animada (tiene prioridad)
           mostrarHito(hito);
+        } else if (habil.length) {
+          // La carrera no es lineal: avisamos qué materia se habilitó
+          mostrarPopupHabilita(m, habil, function () { go(destino); });
         } else {
-          // Aprobación normal: notificación + volver al dashboard tildado
-          go("materia.html?etapa=" + etapa + "&id=" + id);
+          // Aprobación normal: volver al dashboard tildado
+          go(destino);
         }
       };
       el("no-aprobe").onclick = function () { E.desaprobar(id); go("materia.html?etapa=" + etapa + "&id=" + id); };
@@ -889,7 +1017,7 @@
           '<span class="texto">Distinto de quedar <strong>libre</strong>: ahí sí perdés la regularidad ' +
           "y tenés que rendir libre o recursar.</span></div>",
         cta:
-          '<button class="btn btn-etapa" id="recuperatorio" style="margin-bottom:10px">Anotarme a la mesa</button>' +
+          '<button class="btn btn-etapa" id="recuperatorio" style="margin-bottom:10px">Volver a rendir</button>' +
           '<button class="btn btn-secundario" id="recursar">Recursar la materia</button>',
         nav: navCfg
       });
@@ -972,21 +1100,21 @@
     var aprobGlobal = anioObj.baseAprobadas + E.aprobadasAnio(anio);
 
     var filas = anioObj.materias.map(function (m) {
-      var e = E.estadoMateria(m.id);
-      var bloq = !E.habilitada(m);
-      var cuenta = m.catedras ? m.catedras.length + " cátedras" : null;
-      return U.filaMateria(m, e, {
-        href: "materia.html?etapa=carrera&id=" + m.id,
-        bloqueada: bloq,
+      return filaMateriaSeguimiento(m, anio, {
         codigoPrefijo: true,
-        meta: m.cursada + (cuenta ? " · " + cuenta : "")
+        bloqueadaCorrel: !E.habilitada(m)
       });
     }).join("");
 
     var pct = Math.round((aprobGlobal / D.CARRERA.totalMaterias) * 100);
-    var helper = pct < 25 ? "Recién entraste. Las tres anuales son las que marcan el año." :
+    var helper = pct < 25 ? "Recién entraste. Las anuales troncales son las que marcan el año." :
                  pct < 80 ? "Vas en camino. Seguí con los talleres troncales." :
                  "Estás cerca de recibirte.";
+    var avisoTopeCar = E.topeAlcanzado(anio)
+      ? '<div class="callout" style="margin:16px 0 0">' + U.icono("alerta") +
+        '<span class="texto"><strong>Estás en el máximo de ' + E.TOPE_CUATRIMESTRE + ' materias</strong> ' +
+        "del cuatrimestre. Aprobá alguna para liberar las demás.</span></div>"
+      : "";
 
     var selectorAnios = '<div class="selector-anios">' +
       [1, 2, 3, 4].map(function (n) {
@@ -1012,8 +1140,9 @@
         "</div><hr class=\"hero-divisor\">" +
         '<p class="t-chico" style="opacity:.9">' + U.esc(helper) + "</p></div>" +
         selectorAnios +
-        '<div class="seccion-titulo"><h2>Para anotarte</h2>' +
-        '<span class="conteo">3 de ' + anioObj.total + "</span></div>" +
+        '<div class="seccion-titulo"><h2>Materias del año</h2>' +
+        '<span class="conteo">Hasta ' + E.TOPE_CUATRIMESTRE + " por cuatrimestre</span></div>" +
+        avisoTopeCar +
         '<div class="lista-materias">' + filas + "</div>" +
         '<a href="arbol.html?anio=' + anio + '" class="btn btn-secundario" style="margin-top:16px">' +
         U.icono("arbol") + "Ver árbol de correlatividades</a>",

@@ -829,6 +829,19 @@
 .noti-item .noti-ic svg { width: 22px; height: 22px; }
 .noti-item .info { flex: 1 1 auto; min-width: 0; }
 
+/* Ícono circular para el pop-up de correlatividad (materia habilitada) */
+.popup-icono {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--c-lima);
+  color: var(--c-navy);
+  margin-bottom: 14px;
+}
+.popup-icono svg { width: 28px; height: 28px; }
+
 /* ============================================================
    13b. ONBOARDING
    ============================================================ */

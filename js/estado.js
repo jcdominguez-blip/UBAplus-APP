@@ -66,14 +66,30 @@
     return materia.correlativas.every(aprobada);
   }
 
-  /* Regla 2: en el CBC, máximo 3 materias inscriptas por cuatrimestre */
-  function inscriptasCBC() {
-    return window.DATA.CBC.materias.filter(function (m) {
+  /* Regla 2: se cursan como máximo 4 materias por cuatrimestre.
+     Vale para el CBC y para cada año de la carrera (mismo mecanismo).
+     Un "ámbito" es "cbc" o el número de año (1-4). */
+  var TOPE_CUATRIMESTRE = 4;
+
+  function materiasDeAmbito(ambito) {
+    if (ambito === "cbc") return window.DATA.CBC.materias;
+    var anio = window.DATA.CARRERA.anios[ambito - 1];
+    return anio ? anio.materias : [];
+  }
+  /* Materias del ámbito que ya estás llevando (anotadas o cursando) */
+  function enCurso(ambito) {
+    return materiasDeAmbito(ambito).filter(function (m) {
       var e = estadoMateria(m.id);
       return e === "inscripta" || e === "cursando";
     }).length;
   }
-  function puedeInscribirCBC() { return inscriptasCBC() < 3; }
+  /* ¿Llegaste al tope de materias por cuatrimestre en este ámbito? */
+  function topeAlcanzado(ambito) { return enCurso(ambito) >= TOPE_CUATRIMESTRE; }
+  function puedeAnotar(ambito) { return enCurso(ambito) < TOPE_CUATRIMESTRE; }
+
+  /* Compat: el CBC es el ámbito "cbc" */
+  function inscriptasCBC() { return enCurso("cbc"); }
+  function puedeInscribirCBC() { return puedeAnotar("cbc"); }
 
   /* ---------------- Escritura ---------------- */
   function setMateria(id, patch) {
@@ -181,6 +197,24 @@
     return null;
   }
 
+  /* Regla 5 (visible): al aprobar una materia, ¿qué materias quedan recién
+     habilitadas? Devuelve los info {etapa, anio, materia} de las materias que
+     esta aprobación destraba (todas sus correlativas ya aprobadas) y que todavía
+     no cursaste. Sirve para avisar que la carrera no es lineal. */
+  function habilitadasAlAprobar(idAprobada) {
+    var info = window.DATA.buscarMateria(idAprobada);
+    if (!info || !info.materia.habilita || !info.materia.habilita.length) return [];
+    return info.materia.habilita
+      .map(function (depId) { return window.DATA.buscarMateria(depId); })
+      .filter(function (x) {
+        if (!x) return false;
+        if (aprobada(x.materia.id)) return false;
+        var e = estadoMateria(x.materia.id);
+        if (e === "inscripta" || e === "cursando") return false;
+        return habilitada(x.materia); // todas sus correlativas ya están aprobadas
+      });
+  }
+
   /* Cierra el CBC y habilita la carrera */
   function cerrarCBC() {
     estado.etapa = "carrera";
@@ -225,8 +259,13 @@
     datosMateria: datosMateria,
     aprobada: aprobada,
     habilitada: habilitada,
+    enCurso: enCurso,
+    topeAlcanzado: topeAlcanzado,
+    puedeAnotar: puedeAnotar,
+    TOPE_CUATRIMESTRE: TOPE_CUATRIMESTRE,
     inscriptasCBC: inscriptasCBC,
     puedeInscribirCBC: puedeInscribirCBC,
+    habilitadasAlAprobar: habilitadasAlAprobar,
     aprobadasCBC: aprobadasCBC,
     cbcCompleto: cbcCompleto,
     aprobadasAnio: aprobadasAnio,

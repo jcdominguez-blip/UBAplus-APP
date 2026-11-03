@@ -114,8 +114,8 @@
 
   /* ---------------- Chip de estado ---------------- */
   var ESTADO_LABEL = {
-    "no-inscripta": "No inscripta",
-    "inscripta": "Inscripta",
+    "no-inscripta": "Sin anotar",
+    "inscripta": "Anotada",
     "cursando": "Cursando",
     "aprobada": "Aprobada",
     "desaprobada": "Desaprobada",
