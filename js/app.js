@@ -1099,12 +1099,14 @@
     var anioObj = D.CARRERA.anios[anio - 1];
     var aprobGlobal = anioObj.baseAprobadas + E.aprobadasAnio(anio);
 
-    var filas = anioObj.materias.map(function (m) {
+    var mkFila = function (m) {
       return filaMateriaSeguimiento(m, anio, {
         codigoPrefijo: true,
         bloqueadaCorrel: !E.habilitada(m)
       });
-    }).join("");
+    };
+    var filasMuestra = anioObj.materias.filter(function (m) { return m.enMuestra; }).map(mkFila).join("");
+    var filasOtras   = anioObj.materias.filter(function (m) { return !m.enMuestra; }).map(mkFila).join("");
 
     var pct = Math.round((aprobGlobal / D.CARRERA.totalMaterias) * 100);
     var helper = pct < 25 ? "Recién entraste. Las anuales troncales son las que marcan el año." :
@@ -1143,7 +1145,11 @@
         '<div class="seccion-titulo"><h2>Materias del año</h2>' +
         '<span class="conteo">Hasta ' + E.TOPE_CUATRIMESTRE + " por cuatrimestre</span></div>" +
         avisoTopeCar +
-        '<div class="lista-materias">' + filas + "</div>" +
+        '<div class="lista-materias">' + filasMuestra + "</div>" +
+        (filasOtras
+          ? '<div class="t-etiqueta muted" style="margin:18px 0 8px">Otras materias del año</div>' +
+            '<div class="lista-materias">' + filasOtras + "</div>"
+          : "") +
         '<a href="arbol.html?anio=' + anio + '" class="btn btn-secundario" style="margin-top:16px">' +
         U.icono("arbol") + "Ver árbol de correlatividades</a>",
       nav: { etapa: "carrera", activo: "progreso", anio: anio }

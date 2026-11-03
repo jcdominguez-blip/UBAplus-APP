@@ -147,11 +147,16 @@
     return cbcCompleto() ? window.DATA.CBC.total : aprobadasMuestraCBC();
   }
 
-  /* Cuenta aprobadas de un año de la carrera (de la muestra) */
-  function aprobadasAnio(numero) {
+  /* Materias troncales (muestra) de un año: marcan el avance y el pasaje.
+     Las materias extra del año no cuentan para la progresión. */
+  function materiasMuestraAnio(numero) {
     var anio = window.DATA.CARRERA.anios[numero - 1];
-    if (!anio) return 0;
-    return anio.materias.filter(function (m) { return aprobada(m.id); }).length;
+    if (!anio) return [];
+    return anio.materias.filter(function (m) { return m.enMuestra; });
+  }
+  /* Cuenta aprobadas de la muestra de un año de la carrera */
+  function aprobadasAnio(numero) {
+    return materiasMuestraAnio(numero).filter(function (m) { return aprobada(m.id); }).length;
   }
 
   /* Total de materias aprobadas de la carrera, comprimido según la muestra.
@@ -161,7 +166,7 @@
     if (!anio) return 7;
     var aprob = aprobadasAnio(estado.anioActual);
     // Año completo: salta al acumulado total del año (compresión de la muestra)
-    if (aprob >= anio.materias.length) return anio.baseAprobadas + anio.total;
+    if (aprob >= materiasMuestraAnio(estado.anioActual).length) return anio.baseAprobadas + anio.total;
     return anio.baseAprobadas + aprob;
   }
 
@@ -181,8 +186,8 @@
     if (info.etapa === "carrera") {
       var numero = info.anio;
       var anio = window.DATA.CARRERA.anios[numero - 1];
-      // Regla 4: aprobar la 3ra materia de la muestra del año dispara el pasaje
-      if (aprobadasAnio(numero) >= anio.materias.length) {
+      // Regla 4: aprobar todas las troncales (muestra) del año dispara el pasaje
+      if (aprobadasAnio(numero) >= materiasMuestraAnio(numero).length) {
         var materia = info.materia;
         if (materia.ultima) {
           // Regla 5: aprobar las 33 lleva a graduado
