@@ -21,29 +21,30 @@
     { nombre: "Ex Wolkowicz",       turno: "Noche"  }
   ];
 
-  /* Cátedras reales por disciplina para las materias que no son Diseño.
-     Se nombran por el titular de la cátedra, como en FADU. Son nombres
-     realistas a modo de referencia: se ajustan a los titulares exactos de
-     cada ciclo lectivo. */
+  /* Cátedras por disciplina para las materias que no son Diseño, nombradas por
+     el titular como en FADU. Tipografía y Comunicación usan cátedras reales de
+     la carrera; Morfología e Historia combinan titulares reales con alguno de
+     referencia. El mapeo exacto por turno/ciclo lectivo se ajusta al listado
+     oficial de cada año. */
   var CATEDRAS_TIPOGRAFIA = [
     { nombre: "Cosgaya",    turno: "Mañana" },
-    { nombre: "Pérez Tort", turno: "Tarde"  },
-    { nombre: "Gaudio",     turno: "Noche"  }
+    { nombre: "Gaitto",     turno: "Tarde"  },
+    { nombre: "Longinotti", turno: "Noche"  }
   ];
   var CATEDRAS_MORFOLOGIA = [
     { nombre: "Wainhaus",   turno: "Mañana" },
-    { nombre: "Pueyo",      turno: "Tarde"  },
-    { nombre: "Grispo",     turno: "Noche"  }
+    { nombre: "Pérez Tort", turno: "Tarde"  },
+    { nombre: "Pueyo",      turno: "Noche"  }
   ];
   var CATEDRAS_COMUNICACION = [
-    { nombre: "Sexe",       turno: "Mañana" },
+    { nombre: "Arfuch",     turno: "Mañana" },
     { nombre: "Ledesma",    turno: "Tarde"  },
-    { nombre: "Arfuch",     turno: "Noche"  }
+    { nombre: "Devalle",    turno: "Noche"  }
   ];
   var CATEDRAS_HISTORIA = [
-    { nombre: "Devalle",    turno: "Mañana" },
-    { nombre: "Gené",       turno: "Tarde"  },
-    { nombre: "Bruno",      turno: "Noche"  }
+    { nombre: "Gené",       turno: "Mañana" },
+    { nombre: "Gergich",    turno: "Tarde"  },
+    { nombre: "Vigna",      turno: "Noche"  }
   ];
   var CATEDRAS_MEDIOS = [
     { nombre: "Crespo",     turno: "Mañana" },
