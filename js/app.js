@@ -1535,6 +1535,9 @@
     return inicio();
 
     function inicio() {
+      var pgId = E.getPosgradoInscripto();
+      var pg = pgId ? buscarPosgrado(pgId) : null;
+      var notifOn = E.getNotifPosgrados();
       U.montarApp(APP(), {
         header:
           '<header class="app-header"><div style="flex:1"><div class="t-caption muted">03 · TÍTULO Y POSGRADO</div>' +
@@ -1544,12 +1547,52 @@
           '<div class="t-h2">¡Te recibiste!</div>' +
           '<p class="t-chico" style="opacity:.9;margin-top:6px">Aprobaste las 33 materias del Plan 2022. ' +
           "Lo que sigue es el trámite del título.</p></div>" +
+          (pg ? tarjetaCursando(pg) : "") +
           '<div class="stack-12">' +
           enlaceCard("Tramitar el título", "Checklist del trámite, 100% online.", "diploma", "titulo.html?tab=tramite") +
-          enlaceCard("Posgrados de FADU", "14 maestrías y 19 especializaciones.", "libro", "posgrado.html") +
+          enlaceCard(pg ? "Ver otros posgrados" : "Posgrados de FADU", "14 maestrías y 19 especializaciones.", "libro", "posgrado.html") +
           enlaceCard("Cierre de tu recorrido", "Mirá todo lo que hiciste desde el CBC.", "check", "titulo.html?tab=cierre") +
-          "</div>",
+          "</div>" +
+          switchNotif(notifOn),
         nav: { etapa: "graduado", activo: "inicio" }
+      });
+      cablearSwitchNotif();
+    }
+
+    function buscarPosgrado(id) {
+      var l = D.POSGRADO.lista;
+      for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+      return l[0];
+    }
+
+    /* Card de estado del posgrado que estás cursando (seguimiento) */
+    function tarjetaCursando(pg) {
+      return '<a class="card-cursando" href="posgrado.html?p=' + pg.id + '&v=seminarios">' +
+        '<div class="row-between" style="margin-bottom:10px">' +
+        '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta)">Cohorte 2026</span>' +
+        '<span class="chip" style="background:var(--c-lima);color:var(--c-navy)">En curso</span></div>' +
+        '<div class="t-chico" style="color:var(--c-blanco);opacity:.85">Estás cursando</div>' +
+        '<div class="t-h3" style="color:var(--c-blanco);margin:2px 28px 14px 0">' + U.esc(pg.nombre) + "</div>" +
+        '<div class="barra" style="background:rgba(255,255,255,.25)"><div class="relleno" style="width:56%;background:var(--c-lima)"></div></div>' +
+        '<div class="row-between" style="margin-top:8px">' +
+        '<span class="t-chico" style="color:var(--c-blanco);opacity:.85">5 de 9 seminarios</span>' +
+        '<span class="t-chico" style="color:var(--c-blanco);opacity:.7">Seguimiento, no inscripción</span></div>' +
+        '<span class="card-cursando-chev">' + U.icono("chevron") + "</span></a>";
+    }
+
+    /* Switch: avisar cuando abran nuevos posgrados */
+    function switchNotif(on) {
+      return '<button class="switch-row" type="button" role="switch" id="switch-notif" aria-checked="' + on + '">' +
+        '<span class="switch-info"><span class="t-base-fuerte">Avisarme de nuevos posgrados</span>' +
+        '<span class="t-chico muted">Te notificamos cuando FADU abra nuevas inscripciones.</span></span>' +
+        '<span class="switch-track"><span class="switch-thumb"></span></span></button>';
+    }
+    function cablearSwitchNotif() {
+      var b = el("switch-notif");
+      if (!b) return;
+      b.addEventListener("click", function () {
+        var on = E.setNotifPosgrados(b.getAttribute("aria-checked") !== "true");
+        b.setAttribute("aria-checked", on);
       });
     }
 
@@ -1676,9 +1719,8 @@
     if (v === "inscripcion") return inscripcion(sel);
     if (v === "aranceles")   return aranceles(sel);
     if (v === "contacto")    return contacto(sel);
-    if (v === "cursada")     return cursada(sel);
-    if (v === "seminarios")  return seminarios();
-    if (v === "final")       return final();
+    if (v === "seminarios")  return seminarios(sel);
+    if (v === "final")       return final(sel);
     if (qs("p"))             return ficha(sel);
     return listado();
 
@@ -1763,9 +1805,11 @@
           '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Confirmá antes de decidir</div>" +
           "<p class=\"t-chico\">Programa, cupos y fechas los fija la Secretaría de Posgrado cada año. " +
           "Esta ficha es una guía, no el reglamento oficial.</p></div>",
-        cta: '<a class="btn btn-primario" href="posgrado.html?' + q + '&v=cursada">Ya me inscribí · ver mi cursada</a>',
+        cta: '<button class="btn btn-primario" type="button" id="cta-inscribir-pg">Ya me inscribí · seguir esta cursada</button>',
         nav: { etapa: "graduado", activo: "posgrados" }
       });
+      var btn = el("cta-inscribir-pg");
+      if (btn) btn.onclick = function () { E.inscribirPosgrado(p.id); go("titulo.html"); };
     }
 
     /* ---------- D5 · Inscripción ---------- */
@@ -1844,36 +1888,8 @@
       });
     }
 
-    /* ---------- D8 · Mi cursada (profesional) ---------- */
-    function cursada(p) {
-      var q = "p=" + p.id + "&";
-      U.montarApp(APP(), {
-        header:
-          '<header class="app-header header-dash"><div class="dash-titulos">' +
-          '<div class="t-chico muted">Hola, Juan</div><div class="t-h1">Mi posgrado</div></div>' +
-          '<button class="btn-campana" type="button" aria-label="Notificaciones">' + U.icono("campana") + "</button></header>",
-        main:
-          '<div class="hero-etapa" style="background:var(--c-violeta);color:var(--c-blanco)">' +
-          '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta);margin-bottom:12px">Cohorte 2026</span>' +
-          '<div class="t-h2">' + U.esc(p.nombre) + "</div>" +
-          '<div class="row-between" style="margin:16px 0 8px"><span class="t-base-fuerte">5 de 9 seminarios</span>' +
-          '<span class="t-base-fuerte">56%</span></div>' +
-          '<div class="barra"><div class="relleno" style="width:56%;background:var(--c-lima)"></div></div></div>' +
-          '<div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:12px">' +
-          '<span class="evento-fecha" style="background:var(--c-pastel-amarillo)">04</span>' +
-          '<div><div class="t-chico muted">Próxima clase · miércoles</div>' +
-          '<div class="t-base-fuerte">Seminario 6 · 19 a 22 h</div></div></div>' +
-          '<div class="stack-12">' +
-          linkColor("--c-lavanda", "--c-blanco", "diploma", "Mis seminarios", "5 aprobados · 1 cursando", "posgrado.html?" + q + "v=seminarios") +
-          linkColor("--c-pastel-coral", "--c-blanco", "plan", "Trabajo Final Integrador", "Sin empezar", "posgrado.html?" + q + "v=final") +
-          linkColor("--c-pastel-lima", "--c-blanco", "check", "Cuotas", "Al día", "posgrado.html?" + q + "v=cursada") +
-          "</div>",
-        nav: { etapa: "posgradoCursada", activo: "cursada" }
-      });
-    }
-
-    /* ---------- D9 · Seminarios ---------- */
-    function seminarios() {
+    /* ---------- D9 · Seminarios (detalle, misma navbar graduado) ---------- */
+    function seminarios(p) {
       var sem = [
         { n: 1, bloque: "formacion", estado: "aprobada", nota: "9" },
         { n: 2, bloque: "formacion", estado: "aprobada", nota: "8" },
@@ -1897,22 +1913,29 @@
       var form = sem.filter(function (s) { return s.bloque === "formacion"; });
       var esp = sem.filter(function (s) { return s.bloque === "especializacion"; });
       U.montarApp(APP(), {
-        header: U.headerAtras("Mi posgrado"),
+        header: U.headerAtras("Tu cursada"),
         main:
           '<h1 class="t-h1">Mis seminarios</h1>' +
+          '<p class="t-chico muted" style="margin:6px 0 2px">' + U.esc(p.nombre) + "</p>" +
           '<div class="row-between" style="margin:12px 0 10px"><span class="t-base-fuerte">5 de 9 aprobados</span>' +
           '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta)">Cohorte 2026</span></div>' +
           '<div class="barra" style="background:var(--c-n200);margin-bottom:22px"><div class="relleno" style="width:56%;background:var(--c-violeta)"></div></div>' +
           '<div class="t-caption muted" style="margin-bottom:10px">BLOQUE DE FORMACIÓN</div>' +
           '<div class="stack-12">' + form.map(filaSem).join("") + "</div>" +
           '<div class="t-caption muted" style="margin:22px 0 10px">BLOQUE DE ESPECIALIZACIÓN</div>' +
-          '<div class="stack-12">' + esp.map(filaSem).join("") + "</div>",
-        nav: { etapa: "posgradoCursada", activo: "seminarios" }
+          '<div class="stack-12">' + esp.map(filaSem).join("") + "</div>" +
+          '<div class="stack-12" style="margin-top:22px">' +
+          linkCard("Trabajo Final Integrador", "Sin empezar", "posgrado.html?p=" + p.id + "&v=final") +
+          "</div>" +
+          '<div class="callout" style="margin-top:14px">' + U.icono("info") +
+          "<span class=\"texto\">Es una herramienta de <strong>seguimiento</strong>, no de inscripción. " +
+          "Te anotás a cada seminario por los canales de Posgrado.</span></div>",
+        nav: { etapa: "graduado", activo: "posgrados" }
       });
     }
 
     /* ---------- D10 · Trabajo Final Integrador ---------- */
-    function final() {
+    function final(p) {
       var pasos = [
         { t: "Elegir el tema y el director", s: "Un docente de la carrera dirige el trabajo." },
         { t: "Presentar el plan", s: "Se entrega en Posgrado para su aprobación." },
@@ -1930,8 +1953,8 @@
           "aprobados 6 de los 9 seminarios. Te falta uno.</span></div>" +
           '<h2 class="t-h3" style="margin:22px 0 12px">Los cuatro pasos</h2>' +
           '<div class="stack-12">' +
-          pasos.map(function (p, i) { return itemNum(i + 1, p.t, p.s, "--c-n200"); }).join("") + "</div>",
-        nav: { etapa: "posgradoCursada", activo: "final" }
+          pasos.map(function (paso, i) { return itemNum(i + 1, paso.t, paso.s, "--c-n200"); }).join("") + "</div>",
+        nav: { etapa: "graduado", activo: "posgrados" }
       });
     }
   }

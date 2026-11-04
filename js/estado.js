@@ -18,7 +18,9 @@
     anioActual: 1,
     catedraDiseno: null,   // se fija al elegir en DG1 y ya no cambia
     materias: {},          // { dg1: { estado, catedra, comision, notas } }
-    checklists: {}         // { "titulo-tramite": { "libre-deuda": true, ... } }
+    checklists: {},        // { "titulo-tramite": { "libre-deuda": true, ... } }
+    posgradoInscripto: null, // id del posgrado que estás "cursando" (seguimiento)
+    notifPosgrados: false    // switch: avisar cuando abran nuevos posgrados
   };
 
   // Estados posibles de una materia:
@@ -281,6 +283,14 @@
     return ids.filter(function (id) { return c[id] === true; }).length;
   }
 
+  /* ---------------- Posgrado en seguimiento ----------------
+     El alumno se inscribe por fuera (SIU/Posgrado); acá sólo registra
+     cuál está cursando para seguirlo. No es un sistema de inscripción. */
+  function inscribirPosgrado(id) { estado.posgradoInscripto = id; guardar(estado); }
+  function getPosgradoInscripto() { return estado.posgradoInscripto || null; }
+  function setNotifPosgrados(flag) { estado.notifPosgrados = !!flag; guardar(estado); return estado.notifPosgrados; }
+  function getNotifPosgrados() { return estado.notifPosgrados === true; }
+
   window.ESTADO = {
     get: get,
     estadoMateria: estadoMateria,
@@ -313,6 +323,10 @@
     itemCheck: itemCheck,
     toggleChecklist: toggleChecklist,
     checklistHechos: checklistHechos,
+    inscribirPosgrado: inscribirPosgrado,
+    getPosgradoInscripto: getPosgradoInscripto,
+    setNotifPosgrados: setNotifPosgrados,
+    getNotifPosgrados: getNotifPosgrados,
     reiniciar: reiniciar
   };
 })();
