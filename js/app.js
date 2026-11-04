@@ -707,11 +707,13 @@
       }, 350);
     }
 
+    var esGraduacion = hito.tipo === "fin-carrera";
     var cel = document.createElement("div");
-    cel.className = "hito-pantalla texto-" + c.texto;
+    cel.className = "hito-pantalla texto-" + c.texto + (esGraduacion ? " hito-graduacion" : "");
     cel.setAttribute("data-nav", "false");
     cel.style.background = "var(" + c.color + ")";
     cel.innerHTML =
+      (esGraduacion ? confetiHTML() : "") +
       '<div class="hito-contenido">' +
       '<span class="hito-icono" style="background:var(' + c.circulo + ');color:var(' + iconoColor + ')">' +
         U.icono(c.icono) + "</span>" +
@@ -723,6 +725,22 @@
     overlayHost().appendChild(cel);
     requestAnimationFrame(function () { cel.classList.add("entra"); });
     el("hito-cta").onclick = c.onCta;
+  }
+
+  /* Confeti de celebración (sólo al recibirse). Puro DOM + CSS. */
+  function confetiHTML() {
+    var cols = ["--c-lima", "--c-violeta", "--c-amarillo", "--c-coral", "--c-celeste", "--c-blanco"];
+    var piezas = "";
+    for (var i = 0; i < 30; i++) {
+      var col = cols[i % cols.length];
+      var left = Math.round(Math.random() * 100);
+      var delay = (Math.random() * 0.6).toFixed(2);
+      var dur = (1.9 + Math.random() * 1.4).toFixed(2);
+      var w = 6 + Math.round(Math.random() * 5);
+      piezas += '<span class="confeti" style="left:' + left + "%;width:" + w + "px;background:var(" + col +
+        ");animation-delay:" + delay + "s;animation-duration:" + dur + 's"></span>';
+    }
+    return '<div class="confeti-capa" aria-hidden="true">' + piezas + "</div>";
   }
 
   /* ============================================================
@@ -1513,6 +1531,7 @@
     var tab = qs("tab");
 
     if (tab === "tramite") return tramite();
+    if (tab === "cierre")  return cierre();
     return inicio();
 
     function inicio() {
@@ -1521,34 +1540,120 @@
           '<header class="app-header"><div style="flex:1"><div class="t-caption muted">03 · TÍTULO Y POSGRADO</div>' +
           '<div class="t-h1">Juan, sos<br>diseñador gráfico</div></div></header>',
         main:
-          '<div class="hero-etapa" style="text-align:center"><div class="emoji" style="font-size:48px">🎓</div>' +
+          '<div class="hero-etapa" style="text-align:center"><div class="emoji emoji-recibido" style="font-size:48px">🎓</div>' +
           '<div class="t-h2">¡Te recibiste!</div>' +
           '<p class="t-chico" style="opacity:.9;margin-top:6px">Aprobaste las 33 materias del Plan 2022. ' +
           "Lo que sigue es el trámite del título.</p></div>" +
           '<div class="stack-12">' +
-          enlaceCard("Tramitar el título", "100% online. Instructivos de solicitud y de pago.", "diploma", "titulo.html?tab=tramite") +
+          enlaceCard("Tramitar el título", "Checklist del trámite, 100% online.", "diploma", "titulo.html?tab=tramite") +
           enlaceCard("Posgrados de FADU", "14 maestrías y 19 especializaciones.", "libro", "posgrado.html") +
+          enlaceCard("Cierre de tu recorrido", "Mirá todo lo que hiciste desde el CBC.", "check", "titulo.html?tab=cierre") +
           "</div>",
         nav: { etapa: "graduado", activo: "inicio" }
       });
     }
 
+    /* Trámite del título como checklist interactivo (se guarda solo) */
     function tramite() {
       var t = D.TITULO;
+      var clave = "titulo-tramite";
+      var pasos = t.pasos;
+      var total = pasos.length;
+      var hechos = E.checklistHechos(clave, pasos.map(function (p) { return p.id; }));
+      var pct = Math.round((hechos / total) * 100);
+
       U.montarApp(APP(), {
         header: U.headerAtras("Trámite del título"),
         main:
-          '<div class="callout" style="margin-bottom:16px">' + U.icono("info") +
-          '<span class="texto">El trámite es <strong>100% online</strong>. FADU publica un instructivo de ' +
-          "solicitud y uno de pago.</span></div>" +
-          '<div class="card" style="margin-bottom:12px"><div class="t-h3">Contacto</div>' +
+          '<h1 class="t-h1">Tu trámite, paso a paso</h1>' +
+          '<p class="t-base muted" style="margin:8px 0 16px">Es <strong>100% online</strong>. ' +
+          "Marcá cada paso a medida que lo hacés: se guarda solo.</p>" +
+          '<div class="check-progreso"><div class="row-between" style="margin-bottom:8px">' +
+          '<span class="t-base-fuerte" id="check-conteo">' + hechos + " de " + total + " pasos</span>" +
+          '<span class="t-chico muted" id="check-pct">' + pct + "%</span></div>" +
+          '<div class="barra"><div class="relleno" id="check-barra" style="width:' + pct + '%;background:var(--c-violeta)"></div></div></div>' +
+          '<div class="stack-12" id="check-lista" style="margin-top:18px">' +
+          pasos.map(filaCheck).join("") + "</div>" +
+          '<div class="check-listo" id="check-listo"' + (hechos >= total ? "" : " hidden") + ">" +
+          U.icono("check") + "<span>¡Completaste todos los pasos! Ya podés retirar tu diploma.</span></div>" +
+          '<div class="card" style="margin-top:18px"><div class="t-h3">Contacto</div>' +
           '<div class="dato"><span class="k">Mail</span><span class="v">' + U.esc(t.contacto) + "</span></div>" +
           '<div class="dato"><span class="k">Oficina</span><span class="v" style="max-width:180px">' + U.esc(t.oficina) + "</span></div></div>" +
-          '<div class="card-pendiente"><div class="encabezado">' + U.icono("alerta") + "Falta confirmar</div>" +
-          "<p class=\"t-chico\">FADU no publica la lista completa de pasos del trámite. " +
-          "No los inventamos: seguí el instructivo oficial.</p></div>",
+          '<div class="card-pendiente" style="margin-top:12px"><div class="encabezado">' + U.icono("alerta") + "Confirmá en el instructivo</div>" +
+          "<p class=\"t-chico\">Estos son los pasos generales del diploma en la UBA. " +
+          "El detalle fino lo fija el instructivo oficial de FADU.</p></div>",
         nav: { etapa: "graduado", activo: "titulo" }
       });
+      cablearChecklist(clave, total);
+
+      function filaCheck(p) {
+        var hecho = E.itemCheck(clave, p.id);
+        return '<button class="check-item" type="button" data-id="' + p.id + '" aria-pressed="' + hecho + '">' +
+          '<span class="check-box">' + U.icono("check") + "</span>" +
+          '<span class="info"><span class="t-base-fuerte">' + U.esc(p.t) + "</span>" +
+          '<span class="t-chico muted">' + U.esc(p.s) + "</span></span></button>";
+      }
+    }
+
+    function cablearChecklist(clave, total) {
+      var lista = el("check-lista");
+      if (!lista) return;
+      lista.querySelectorAll(".check-item").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var ahora = E.toggleChecklist(clave, btn.getAttribute("data-id"));
+          btn.setAttribute("aria-pressed", ahora);
+          var hechos = lista.querySelectorAll('.check-item[aria-pressed="true"]').length;
+          var pct = Math.round((hechos / total) * 100);
+          var c = el("check-conteo"); if (c) c.textContent = hechos + " de " + total + " pasos";
+          var pp = el("check-pct");   if (pp) pp.textContent = pct + "%";
+          var b = el("check-barra");  if (b) b.style.width = pct + "%";
+          var listo = el("check-listo");
+          if (listo) { if (hechos >= total) listo.removeAttribute("hidden"); else listo.setAttribute("hidden", ""); }
+        });
+      });
+    }
+
+    /* Cierre: recap emocional de todo el recorrido */
+    function cierre() {
+      var total = D.CARRERA.totalMaterias; // 33
+      U.montarApp(APP(), {
+        header: U.headerAtras("Cierre de tu recorrido"),
+        main:
+          '<div class="hero-etapa" style="text-align:center">' +
+          '<div class="emoji emoji-recibido" style="font-size:44px">🎓</div>' +
+          '<div class="t-h2">Cerrás una etapa</div>' +
+          '<p class="t-chico" style="opacity:.9;margin-top:6px">Empezaste sin saber qué era una cátedra. ' +
+          "Hoy sos diseñador gráfico de la UBA.</p></div>" +
+          '<div class="cierre-stats">' +
+          statCard(total, "materias y<br>seminarios") +
+          statCard("5", "años de<br>recorrido") +
+          statCard("1", "título en<br>camino") +
+          "</div>" +
+          '<h2 class="t-h3" style="margin:24px 0 12px">Todo lo que recorriste</h2>' +
+          '<div class="stack-12">' +
+          hitoCierre("El CBC", "7 materias · cerrado", true) +
+          hitoCierre("La carrera", "33 materias · 4 años · cerrado", true) +
+          hitoCierre("Título y posgrado", "Trámite en curso", false) +
+          "</div>" +
+          '<div class="card-oscura" style="margin-top:20px;text-align:center">' +
+          '<p class="t-base-fuerte" style="color:var(--c-blanco)">Gracias por recorrerlo con UBA+.</p>' +
+          '<p class="t-chico" style="opacity:.8;margin-top:6px">Fue una herramienta de seguimiento: ' +
+          "el diploma lo firma la UBA.</p></div>" +
+          botonReiniciar(),
+        nav: { etapa: "graduado", activo: "inicio" }
+      });
+      cablearReiniciar();
+
+      function statCard(num, label) {
+        return '<div class="cierre-stat"><div class="cierre-stat-num">' + num + "</div>" +
+          '<div class="t-chico muted">' + label + "</div></div>";
+      }
+      function hitoCierre(titulo, sub, hecho) {
+        return '<div class="fila-materia" style="box-shadow:none;background:var(--c-blanco);border:1.5px solid var(--c-n200)">' +
+          '<span class="glifo" data-estado="' + (hecho ? "aprobada" : "cursando") + '">' + U.icono(hecho ? "check" : "reloj") + "</span>" +
+          '<span class="info"><span class="nombre">' + U.esc(titulo) + "</span>" +
+          '<span class="metarow"><span class="meta">' + U.esc(sub) + "</span></span></span></div>";
+      }
     }
 
     function enlaceCard(titulo, texto, icn, href) {
@@ -1567,13 +1672,23 @@
   function pagePosgrado() {
     pintarEtapa("graduado"); // navbar azul como en el prototipo
     var v = qs("v");
-    if (v === "inscripcion") return inscripcion();
-    if (v === "aranceles")   return aranceles();
-    if (v === "contacto")    return contacto();
-    if (v === "cursada")     return cursada();
+    var sel = posgradoSel();
+    if (v === "inscripcion") return inscripcion(sel);
+    if (v === "aranceles")   return aranceles(sel);
+    if (v === "contacto")    return contacto(sel);
+    if (v === "cursada")     return cursada(sel);
     if (v === "seminarios")  return seminarios();
     if (v === "final")       return final();
-    return ficha();
+    if (qs("p"))             return ficha(sel);
+    return listado();
+
+    /* Posgrado elegido por query (?p=), con fallback al primero */
+    function posgradoSel() {
+      var id = qs("p");
+      var lista = D.POSGRADO.lista;
+      for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return lista[i];
+      return lista[0];
+    }
 
     /* Helpers de posgrado */
     function chipLav(txt) { return '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta)">' + U.esc(txt) + "</span>"; }
@@ -1596,58 +1711,88 @@
         (sub ? '<div class="t-chico muted">' + U.esc(sub) + "</div>" : "") + "</div></div>";
     }
 
-    /* ---------- D4 · Ficha de la especialización ---------- */
-    function ficha() {
+    /* ---------- D3 · Lista seleccionable de posgrados ---------- */
+    function listado() {
+      var lista = D.POSGRADO.lista;
+      var tot = D.POSGRADO.totales;
+      function cardPg(p) {
+        return '<a class="pg-opcion" href="posgrado.html?p=' + p.id + '">' +
+          '<div class="pg-opcion-top">' + chipLav(p.tipo) +
+          (p.recomendado ? '<span class="chip pg-reco">Recomendado para vos</span>' : "") + "</div>" +
+          '<div class="t-base-fuerte pg-opcion-nombre">' + U.esc(p.nombre) + "</div>" +
+          '<div class="t-chico muted">' + U.esc(p.duracion) + "</div>" +
+          '<span class="pg-opcion-chev">' + U.icono("chevron") + "</span></a>";
+      }
+      var esp = lista.filter(function (p) { return p.tipo === "Especialización"; });
+      var mae = lista.filter(function (p) { return p.tipo === "Maestría"; });
+      U.montarApp(APP(), {
+        header:
+          '<header class="app-header"><div style="flex:1"><div class="t-caption muted">POSGRADOS · FADU</div>' +
+          '<div class="t-h1">¿Y ahora<br>qué sigue?</div></div></header>',
+        main:
+          '<p class="t-base muted" style="margin-bottom:18px">FADU tiene ' + tot.especializaciones +
+          " especializaciones y " + tot.maestrias + " maestrías. Estas son las más afines a Diseño Gráfico.</p>" +
+          '<div class="t-caption muted" style="margin-bottom:10px">ESPECIALIZACIONES · más cortas</div>' +
+          '<div class="stack-12">' + esp.map(cardPg).join("") + "</div>" +
+          '<div class="t-caption muted" style="margin:22px 0 10px">MAESTRÍAS · con tesis</div>' +
+          '<div class="stack-12">' + mae.map(cardPg).join("") + "</div>" +
+          '<div class="card-pendiente" style="margin-top:18px"><div class="encabezado">' + U.icono("alerta") + "Confirmá la oferta vigente</div>" +
+          "<p class=\"t-chico\">Programa, cupos y fechas los fija la Secretaría de Posgrado cada año. " +
+          "Esta lista es una guía, no el reglamento oficial.</p></div>",
+        nav: { etapa: "graduado", activo: "posgrados" }
+      });
+    }
+
+    /* ---------- D4 · Ficha del posgrado elegido ---------- */
+    function ficha(p) {
+      var q = "p=" + p.id;
       U.montarApp(APP(), {
         header: U.headerAtras("Posgrado"),
         main:
-          '<h1 class="t-h1">Diseño y Gestión de Marcas y Sistemas de Identidad</h1>' +
-          '<div class="chips-row">' + chipLav("Especialización") + chipLav("FADU") + chipLav("Posgrado") + "</div>" +
+          '<div class="chips-row" style="margin-bottom:12px">' + chipLav(p.tipo) + chipLav("FADU") + chipLav("Posgrado") + "</div>" +
+          '<h1 class="t-h1">' + U.esc(p.nombre) + "</h1>" +
+          '<div class="t-chico muted" style="margin:6px 0 16px">' + U.esc(p.duracion) + "</div>" +
           '<div class="card-oscura"><div class="t-h3" style="color:var(--c-blanco)">Por qué te puede servir</div>' +
-          '<p class="t-chico" style="opacity:.85;margin-top:8px">Es la continuación más directa si lo que más te ' +
-          "gustó de la carrera fue la marca: identidad, sistemas, normativa y gestión del diseño.</p></div>" +
+          '<p class="t-chico" style="opacity:.85;margin-top:8px">' + U.esc(p.porque) + "</p></div>" +
           '<h2 class="t-h3" style="margin:22px 0 12px">Dónde informarte</h2>' +
           '<div class="stack-12">' +
-          linkCard("Inscripciones de posgrado", "Ciclo lectivo vigente", "posgrado.html?v=inscripcion") +
-          linkCard("Aranceles y bonificaciones", "", "posgrado.html?v=aranceles") +
-          linkCard("Contacto de Posgrado", "Cursada y requisitos", "posgrado.html?v=contacto") +
+          linkCard("Cómo me inscribo", "Requisitos y documentación", "posgrado.html?" + q + "&v=inscripcion") +
+          linkCard("Aranceles y bonificaciones", "", "posgrado.html?" + q + "&v=aranceles") +
+          linkCard("Contacto de Posgrado", "Cursada y requisitos", "posgrado.html?" + q + "&v=contacto") +
           "</div>" +
           '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Confirmá antes de decidir</div>" +
           "<p class=\"t-chico\">Programa, cupos y fechas los fija la Secretaría de Posgrado cada año. " +
           "Esta ficha es una guía, no el reglamento oficial.</p></div>",
-        cta: '<a class="btn btn-primario" href="posgrado.html?v=cursada">Ya me inscribí · ver mi cursada</a>',
+        cta: '<a class="btn btn-primario" href="posgrado.html?' + q + '&v=cursada">Ya me inscribí · ver mi cursada</a>',
         nav: { etapa: "graduado", activo: "posgrados" }
       });
     }
 
     /* ---------- D5 · Inscripción ---------- */
-    function inscripcion() {
-      var items = [
-        { t: "Ficha de inscripción firmada", s: "Se descarga del sitio de Posgrado" },
-        { t: "Normas de la Secretaría firmadas", s: "" },
-        { t: "Una foto 4×4", s: "Original" },
-        { t: "Fotocopia del DNI", s: "" },
-        { t: "Dos fotocopias A4 del título", s: "Legalizadas sólo por Rectorado UBA" }
-      ];
+    function inscripcion(p) {
+      var items = D.POSGRADO.documentacion;
       U.montarApp(APP(), {
         header: U.headerAtras("Dónde informarte"),
         main:
           '<h1 class="t-h1">Cómo me inscribo</h1>' +
-          '<p class="t-base muted" style="margin:8px 0 18px">Especialización en Diseño y Gestión de marcas ' +
-          "y sistemas de identidad</p>" +
+          '<p class="t-base muted" style="margin:8px 0 18px">' + U.esc(p.nombre) + "</p>" +
           '<div class="card-oscura" style="background:var(--c-violeta)"><div class="row" style="gap:10px;margin-bottom:8px">' +
           '<span style="color:var(--c-blanco)">' + U.icono("calendario") + "</span>" +
           '<span class="t-h3" style="color:var(--c-blanco)">La inscripción abre en marzo</span></div>' +
           '<p class="t-chico" style="opacity:.85">El cierre lo fija Posgrado cada año. Activá el aviso y te llega cuando abra.</p></div>' +
           '<h2 class="t-h3" style="margin:22px 0 12px">Lo que tenés que llevar</h2>' +
           '<div class="stack-12">' +
-          items.map(function (it, i) { return itemNum(i + 1, it.t, it.s); }).join("") + "</div>",
+          items.map(function (it, i) { return itemNum(i + 1, it, ""); }).join("") + "</div>" +
+          (p.tipo === "Maestría" ?
+            '<div class="callout" style="margin-top:14px">' + U.icono("info") +
+            '<span class="texto">Las maestrías suelen pedir además una <strong>entrevista de admisión</strong> ' +
+            "y un anteproyecto de tesis.</span></div>" : ""),
         nav: { etapa: "graduado", activo: "posgrados" }
       });
     }
 
     /* ---------- D6 · Aranceles ---------- */
-    function aranceles() {
+    function aranceles(p) {
       var bonos = [
         { t: "Graduados de la UBA", s: "Suele haber una bonificación sobre el arancel general." },
         { t: "Docentes de la FADU", s: "Con cargo vigente en la facultad." },
@@ -1675,17 +1820,18 @@
     }
 
     /* ---------- D7 · Contacto ---------- */
-    function contacto() {
+    function contacto(p) {
       var f = D.FADU;
+      var q = "p=" + p.id + "&v=contacto";
       U.montarApp(APP(), {
         header: U.headerAtras("Dónde informarte"),
         main:
           '<h1 class="t-h1">Hablar con Posgrado</h1>' +
-          '<p class="t-base muted" style="margin:8px 0 18px">Secretaría de Posgrado · FADU UBA</p>' +
+          '<p class="t-base muted" style="margin:8px 0 18px">' + U.esc(p.nombre) + " · FADU UBA</p>" +
           '<div class="stack-12">' +
-          linkColor("--c-lavanda", "--c-blanco", "mail", "Escribir un mail", "Dirección en el sitio oficial", "posgrado.html?v=contacto") +
-          linkColor("--c-pastel-celeste", "--c-blanco", "pin", "Ir en persona", "Pabellón III, Ciudad Universitaria", "posgrado.html?v=contacto") +
-          linkColor("--c-pastel-amarillo", "--c-blanco", "enlace", "Sitio de Posgrado", "Programas, fechas y aranceles", "posgrado.html?v=contacto") +
+          linkColor("--c-lavanda", "--c-blanco", "mail", "Escribir un mail", p.contacto, "posgrado.html?" + q) +
+          linkColor("--c-pastel-celeste", "--c-blanco", "pin", "Ir en persona", "Pabellón III, Ciudad Universitaria", "posgrado.html?" + q) +
+          linkColor("--c-pastel-amarillo", "--c-blanco", "enlace", "Sitio de Posgrado", "Programas, fechas y aranceles", "posgrado.html?" + q) +
           "</div>" +
           '<div class="card-oscura" style="margin-top:16px"><div class="t-h3" style="color:var(--c-blanco)">Cómo llegar</div>' +
           '<p class="t-chico" style="opacity:.8;margin:8px 0 12px">' + U.esc(f.direccion) + "</p>" +
@@ -1699,7 +1845,8 @@
     }
 
     /* ---------- D8 · Mi cursada (profesional) ---------- */
-    function cursada() {
+    function cursada(p) {
+      var q = "p=" + p.id + "&";
       U.montarApp(APP(), {
         header:
           '<header class="app-header header-dash"><div class="dash-titulos">' +
@@ -1708,7 +1855,7 @@
         main:
           '<div class="hero-etapa" style="background:var(--c-violeta);color:var(--c-blanco)">' +
           '<span class="chip" style="background:var(--c-lavanda);color:var(--c-violeta);margin-bottom:12px">Cohorte 2026</span>' +
-          '<div class="t-h2">Especialización en Diseño y Gestión de marcas</div>' +
+          '<div class="t-h2">' + U.esc(p.nombre) + "</div>" +
           '<div class="row-between" style="margin:16px 0 8px"><span class="t-base-fuerte">5 de 9 seminarios</span>' +
           '<span class="t-base-fuerte">56%</span></div>' +
           '<div class="barra"><div class="relleno" style="width:56%;background:var(--c-lima)"></div></div></div>' +
@@ -1717,9 +1864,9 @@
           '<div><div class="t-chico muted">Próxima clase · miércoles</div>' +
           '<div class="t-base-fuerte">Seminario 6 · 19 a 22 h</div></div></div>' +
           '<div class="stack-12">' +
-          linkColor("--c-lavanda", "--c-blanco", "diploma", "Mis seminarios", "5 aprobados · 1 cursando", "posgrado.html?v=seminarios") +
-          linkColor("--c-pastel-coral", "--c-blanco", "plan", "Trabajo Final Integrador", "Sin empezar", "posgrado.html?v=final") +
-          linkColor("--c-pastel-lima", "--c-blanco", "check", "Cuotas", "Al día", "posgrado.html?v=cursada") +
+          linkColor("--c-lavanda", "--c-blanco", "diploma", "Mis seminarios", "5 aprobados · 1 cursando", "posgrado.html?" + q + "v=seminarios") +
+          linkColor("--c-pastel-coral", "--c-blanco", "plan", "Trabajo Final Integrador", "Sin empezar", "posgrado.html?" + q + "v=final") +
+          linkColor("--c-pastel-lima", "--c-blanco", "check", "Cuotas", "Al día", "posgrado.html?" + q + "v=cursada") +
           "</div>",
         nav: { etapa: "posgradoCursada", activo: "cursada" }
       });

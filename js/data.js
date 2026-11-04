@@ -323,22 +323,61 @@
     online: true,
     contacto: "titulos.fadu@uba.ar",
     oficina: "Planta baja. Consultas martes de 11 a 13 y de 14 a 19.",
-    instructivos: ["Instructivo de solicitud", "Instructivo de pago"]
+    instructivos: ["Instructivo de solicitud", "Instructivo de pago"],
+    /* Pasos del trámite como checklist. Son los pasos generales del
+       diploma en la UBA; el detalle fino lo fija el instructivo oficial. */
+    pasos: [
+      { id: "libre-deuda",   t: "Pedí el libre deuda",            s: "De la Biblioteca y de los departamentos por los que pasaste." },
+      { id: "solicitud",     t: "Completá la solicitud de diploma", s: "100% online, desde el sitio de FADU." },
+      { id: "documentacion", t: "Reuní la documentación",         s: "DNI y lo que pida el instructivo de solicitud." },
+      { id: "pago",          t: "Pagá la tasa del diploma",       s: "Si corresponde según tu situación." },
+      { id: "seguimiento",   t: "Seguí el estado del trámite",    s: "FADU te avisa a medida que avanza." },
+      { id: "retiro",        t: "Retirá tu diploma",              s: "En persona, o en la jura pública de la UBA." }
+    ]
   };
 
   var POSGRADO = {
     totales: { maestrias: 14, especializaciones: 19 },
-    especializacion: {
-      nombre: "Especialización en Diseño y Gestión de Marcas y Sistemas de Identidad",
-      documentacion: [
-        "Ficha de inscripción firmada",
-        "Normas firmadas",
-        "Foto 4×4",
-        "Fotocopia de DNI",
-        "Dos fotocopias A4 del título legalizadas sólo por Rectorado"
-      ],
-      legalizacion: "Rectorado UBA: José E. Uriburu 950, subsuelo, de 9 a 16, con turno por internet."
-    }
+    /* Oferta seleccionable, afín a Diseño Gráfico. Nombres reales de FADU;
+       programa, cupos y fechas los confirma la Secretaría de Posgrado. */
+    lista: [
+      {
+        id: "marcas", tipo: "Especialización", corto: "Branding",
+        nombre: "Diseño y Gestión de Marcas y Sistemas de Identidad",
+        duracion: "≈ 1 año", recomendado: true,
+        porque: "La continuación más directa si lo que más te gustó de la carrera fue la marca: identidad, sistemas, normativa y gestión del diseño.",
+        contacto: "posgrado@fadu.uba.ar"
+      },
+      {
+        id: "dicom", tipo: "Maestría", corto: "diCom",
+        nombre: "Diseño Comunicacional (diCom)",
+        duracion: "2 años · tesis",
+        porque: "La maestría insignia de FADU en comunicación visual. El primer año equivale a la Especialización en Teoría del Diseño Comunicacional.",
+        contacto: "coordinacion.dicom@fadu.uba.ar"
+      },
+      {
+        id: "tipo-mt", tipo: "Maestría", corto: "Tipografía",
+        nombre: "Tipografía (MT)",
+        duracion: "2 años · tesis",
+        porque: "Si te enganchaste con las tres Tipografías de la carrera. Es la única maestría en tipografía de América Latina.",
+        contacto: "posgrado@fadu.uba.ar"
+      },
+      {
+        id: "tipo-cdt", tipo: "Especialización", corto: "CDT",
+        nombre: "Diseño de Tipografía (CDT)",
+        duracion: "≈ 1 año",
+        porque: "El primer paso en tipografía, más corto que la maestría: diseñás tu propia familia tipográfica.",
+        contacto: "posgrado@fadu.uba.ar"
+      }
+    ],
+    documentacion: [
+      "Ficha de inscripción firmada",
+      "Normas de la Secretaría firmadas",
+      "Una foto 4×4 original",
+      "Fotocopia del DNI",
+      "Dos fotocopias A4 del título legalizadas sólo por Rectorado UBA"
+    ],
+    legalizacion: "Rectorado UBA: José E. Uriburu 950, subsuelo, de 9 a 16, con turno por internet."
   };
 
   /* La jerga del CBC (A5) */

@@ -240,3 +240,34 @@ body {
 }
 .etapa-carrera .hero-etapa,
 .etapa-posgrado .hero-etapa { color: var(--c-blanco); }
+
+/* ------------------------------------------------------------
+   Mobile real (dispositivo físico): el prototipo ocupa toda la
+   pantalla, SIN el mockup del celular. El marco, el radio y la
+   sombra del teléfono quedan sólo para desktop y pantallas medianas
+   (MacBook, tablet, etc.).
+   Umbral 480px: cubre todos los teléfonos y deja fuera las tablets
+   (que arrancan en 768px) y el desktop.
+   ------------------------------------------------------------ */
+@media (max-width: 480px) {
+  body { padding: 0; background: var(--c-crema); }
+  .app {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  /* El teléfono ya trae su propia barra de estado (hora, señal,
+     batería): ocultamos la falsa y respetamos el notch con safe-area. */
+  .status-bar { display: none; }
+  .app-header { padding-top: calc(4px + env(safe-area-inset-top, 0px)); }
+  .app-header.header-dash { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+  /* Pantallas a sangre completa (onboarding, hito): bajan el contenido
+     para no quedar debajo del notch. */
+  .app[data-nav="false"] .hito-contenido,
+  .app[data-nav="false"] .app-main { padding-top: env(safe-area-inset-top, 0px); }
+}

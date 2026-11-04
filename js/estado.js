@@ -17,7 +17,8 @@
     etapa: "onboarding",   // "onboarding" | "cbc" | "carrera" | "graduado"
     anioActual: 1,
     catedraDiseno: null,   // se fija al elegir en DG1 y ya no cambia
-    materias: {}           // { dg1: { estado, catedra, comision, notas } }
+    materias: {},          // { dg1: { estado, catedra, comision, notas } }
+    checklists: {}         // { "titulo-tramite": { "libre-deuda": true, ... } }
   };
 
   // Estados posibles de una materia:
@@ -259,6 +260,27 @@
     guardar(estado);
   }
 
+  /* ---------------- Checklists (trámite del título, etc.) ----------------
+     Cada checklist es un objeto { idItem: true } guardado por clave. */
+  function getChecklist(clave) {
+    if (!estado.checklists) estado.checklists = {};
+    return estado.checklists[clave] || {};
+  }
+  function itemCheck(clave, idItem) {
+    return getChecklist(clave)[idItem] === true;
+  }
+  function toggleChecklist(clave, idItem) {
+    if (!estado.checklists) estado.checklists = {};
+    var c = estado.checklists[clave] || (estado.checklists[clave] = {});
+    c[idItem] = !c[idItem];
+    guardar(estado);
+    return c[idItem];
+  }
+  function checklistHechos(clave, ids) {
+    var c = getChecklist(clave);
+    return ids.filter(function (id) { return c[id] === true; }).length;
+  }
+
   window.ESTADO = {
     get: get,
     estadoMateria: estadoMateria,
@@ -287,6 +309,10 @@
     graduarse: graduarse,
     empezarCBC: empezarCBC,
     setEtapa: setEtapa,
+    getChecklist: getChecklist,
+    itemCheck: itemCheck,
+    toggleChecklist: toggleChecklist,
+    checklistHechos: checklistHechos,
     reiniciar: reiniciar
   };
 })();
