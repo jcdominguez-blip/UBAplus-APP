@@ -17,7 +17,8 @@
   --c-celeste:  #3FBCDC;  /* acento de 1º año */
   --c-violeta:  #6B4EF0;  /* acento de 2º año */
   --c-amarillo: #FFC53D;  /* acento de 3º año */
-  --c-coral:    #F2593C;  /* acento de 4º año y desaprobada */
+  --c-naranja-fuerte: #F97316;  /* acento de 4º año (naranja, no rojo) */
+  --c-coral:    #F2593C;  /* desaprobada / error */
   --c-magenta:  #E8266F;  /* libre */
 
   /* ---- Pasteles ---- */
@@ -112,4 +113,4 @@
 .anio-1 { --acento-anio: var(--c-celeste);  --acento-suave: var(--c-pastel-celeste); }
 .anio-2 { --acento-anio: var(--c-violeta);  --acento-suave: var(--c-lavanda); }
 .anio-3 { --acento-anio: var(--c-amarillo); --acento-suave: var(--c-pastel-amarillo); }
-.anio-4 { --acento-anio: var(--c-coral);    --acento-suave: var(--c-pastel-coral); }
+.anio-4 { --acento-anio: var(--c-naranja-fuerte); --acento-suave: var(--c-pastel-durazno); }

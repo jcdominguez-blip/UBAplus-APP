@@ -133,6 +133,12 @@
     setMateria(id, patch);
   }
 
+  /* Cancela el seguimiento de una materia: la saca por completo
+     (vuelve a "no-inscripta"). Para cuando te anotaste mal. */
+  function sacarSeguimiento(id) {
+    if (estado.materias[id]) { delete estado.materias[id]; guardar(estado); }
+  }
+
   /* ---------------- Hitos y avance de etapa ---------------- */
 
   /* Materias de la muestra del CBC (las interactivas) */
@@ -314,6 +320,7 @@
     desaprobar: desaprobar,
     quedarLibre: quedarLibre,
     recursar: recursar,
+    sacarSeguimiento: sacarSeguimiento,
     cerrarCBC: cerrarCBC,
     pasarAnio: pasarAnio,
     graduarse: graduarse,

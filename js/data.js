@@ -129,6 +129,7 @@
         id: "icp2", codigo: "ICP II", nombre: "Intr. al Conocimiento Proyectual II",
         corto: "Conocimiento Proyectual II", cursada: "Cuatrimestral", horas: "8 hs semanales",
         enMuestra: false, evalTipo: "taller",
+        correlativas: ["icp1"],
         descripcion: "La continuación del taller proyectual. Se encadena con Proyectual I y profundiza los ejercicios de composición y forma.",
         evaluacion: "No lleva parciales: tres trabajos prácticos —inicial, de proceso y entrega final—. Promocionás con 7.",
         comisiones: [
@@ -380,6 +381,54 @@
     legalizacion: "Rectorado UBA: José E. Uriburu 950, subsuelo, de 9 a 16, con turno por internet."
   };
 
+  /* Review corto de las 3 carreras de la pantalla "Te puede interesar FADU".
+     Pensado para alguien que sale del secundario. Fuente: fadu.uba.ar/carreras
+     (duración y títulos oficiales; los planes y cantidades se confirman ahí). */
+  var CARRERAS_INFO = {
+    dg: {
+      nombre: "Diseño Gráfico",
+      titulo: "Diseñador/a Gráfico/a",
+      duracion: "CBC + 4 años (5 en total)",
+      materias: "33 materias y seminarios (Plan 2022)",
+      carga: "Materias troncales anuales, de taller: se proyecta y se corrige en clase.",
+      resumen: "Comunicás ideas con imágenes: marcas, tipografía, piezas editoriales y packaging.",
+      salida: [
+        "Identidad de marca y sistemas visuales",
+        "Editorial: libros, revistas, colecciones",
+        "Packaging y señalética",
+        "Tipografía, ilustración y diseño UX/UI"
+      ]
+    },
+    dis: {
+      nombre: "Diseño de Imagen y Sonido",
+      titulo: "Diseñador/a de Imagen y Sonido",
+      duracion: "CBC + 5 años",
+      materias: "Unas 34 materias (Plan IS17)",
+      carga: "Teóricas audiovisuales + talleres de realización con equipo técnico.",
+      resumen: "Pensás y producís lo audiovisual: imagen, sonido, montaje y nuevos medios.",
+      salida: [
+        "Cine y TV: dirección, producción, montaje",
+        "Sonido y postproducción",
+        "Animación y motion",
+        "Contenidos para nuevos medios"
+      ]
+    },
+    arq: {
+      nombre: "Arquitectura",
+      titulo: "Arquitecto/a",
+      duracion: "CBC + 6 años",
+      materias: "Unas 38 materias y talleres",
+      carga: "Talleres de proyecto anuales, de alta carga horaria y mucha producción.",
+      resumen: "Proyectás y construís espacios: desde una casa hasta pensar la ciudad.",
+      salida: [
+        "Proyecto y dirección de obra",
+        "Urbanismo y planificación",
+        "Interiorismo y patrimonio",
+        "Diseño y gestión de proyectos"
+      ]
+    }
+  };
+
   /* La jerga del CBC (A5) */
   var JERGA = [
     { palabra: "Cátedra", def: "El equipo de docentes que dicta una materia con su propia mirada. En la carrera elegís entre varias." },
@@ -546,6 +595,7 @@
     CALENDARIO_2026: CALENDARIO_2026,
     TITULO: TITULO,
     POSGRADO: POSGRADO,
+    CARRERAS_INFO: CARRERAS_INFO,
     JERGA: JERGA,
     FACULTADES: FACULTADES,
     CARRERAS_FADU: CARRERAS_FADU,

@@ -199,9 +199,9 @@
 
     function interesFadu() {
       var cierres = [
-        { color: "--c-lima",    nombre: "Diseño Gráfico", sub: "Marcas, tipografía, editorial, packaging" },
-        { color: "--c-naranja", nombre: "Diseño de Imagen y Sonido", sub: "Cine, sonido, montaje, audiovisual" },
-        { color: "--c-lavanda", nombre: "Arquitectura", sub: "Espacios, obra, ciudad" }
+        { id: "dg",  color: "--c-lima",    nombre: "Diseño Gráfico", sub: "Marcas, tipografía, editorial, packaging" },
+        { id: "dis", color: "--c-naranja", nombre: "Diseño de Imagen y Sonido", sub: "Cine, sonido, montaje, audiovisual" },
+        { id: "arq", color: "--c-lavanda", nombre: "Arquitectura", sub: "Espacios, obra, ciudad" }
       ];
       montar({
         header: topDots(2),
@@ -211,16 +211,22 @@
           "Arquitectura, Diseño y Urbanismo es un buen lugar para mirar. Son siete carreras y todas tienen " +
           "que ver con proyectar algo.</p>" +
           '<div class="t-h3" style="margin-bottom:12px">Tres que te pueden cerrar</div>' +
-          '<div class="stack-12">' +
+          '<p class="t-chico muted" style="margin:-4px 0 12px">Tocá la <strong>ⓘ</strong> para ver de qué va cada una.</p>' +
+          '<div class="stack-12" id="carreras-sug">' +
           cierres.map(function (c) {
             return '<div class="carrera-sugerida">' +
               '<span class="punto-color" style="background:var(' + c.color + ')"></span>' +
               '<span class="info"><span class="t-base-fuerte">' + U.esc(c.nombre) + "</span>" +
               '<span class="t-chico muted">' + U.esc(c.sub) + "</span></span>" +
-              '<span class="chevron">' + U.icono("chevron") + "</span></div>";
+              '<button class="btn-info-carrera" type="button" data-carrera="' + c.id + '" ' +
+              'aria-label="Más info de ' + U.esc(c.nombre) + '">' + U.icono("info") + "</button></div>";
           }).join("") +
           "</div>",
         cta: '<button class="btn btn-etapa" id="cta">Me interesa, seguir</button>'
+      });
+      var cont = el("carreras-sug");
+      if (cont) cont.querySelectorAll(".btn-info-carrera").forEach(function (b) {
+        b.onclick = function () { abrirInfoCarrera(b.getAttribute("data-carrera")); };
       });
       el("cta").onclick = avanzar;
       cablearSaltar();
@@ -371,6 +377,47 @@
       '<div class="callout" style="margin-bottom:12px">' + U.icono("senal") +
         '<span class="texto"><strong>Tren:</strong> ' + f.trenes.join(" · ") + ". También Ecobici.</span></div>" +
       '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:8px">Cerrar</button>' +
+      "</div>";
+    overlayHost().appendChild(overlay);
+    requestAnimationFrame(function () { overlay.classList.add("abierta"); });
+    function cerrar() { overlay.classList.remove("abierta"); setTimeout(function () { overlay.remove(); }, 260); }
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) cerrar(); });
+    el("cerrar-hoja").onclick = cerrar;
+  }
+
+  /* Hoja de review de una carrera (ícono de info en "Te puede interesar FADU") */
+  function abrirInfoCarrera(id) {
+    var c = D.CARRERAS_INFO[id];
+    if (!c) return;
+    function dato(k, v) {
+      return '<div class="dato"><span class="k">' + U.esc(k) + '</span><span class="v" style="max-width:200px;text-align:right">' + U.esc(v) + "</span></div>";
+    }
+    var overlay = document.createElement("div");
+    overlay.className = "hoja-overlay";
+    overlay.innerHTML =
+      '<div class="hoja" role="dialog" aria-label="Sobre la carrera">' +
+      '<div class="asa"></div>' +
+      '<div class="t-caption muted">CARRERA DE FADU</div>' +
+      '<div class="t-h1" style="margin:2px 0 4px">' + U.esc(c.nombre) + "</div>" +
+      '<p class="t-chico muted" style="margin-bottom:16px">' + U.esc(c.resumen) + "</p>" +
+      '<div class="card" style="margin-bottom:16px">' +
+        dato("Título", c.titulo) +
+        dato("Duración", c.duracion) +
+        dato("Plan", c.materias) +
+      "</div>" +
+      '<div class="callout" style="margin-bottom:16px">' + U.icono("info") +
+        '<span class="texto"><strong>Cómo se cursa.</strong> ' + U.esc(c.carga) + "</span></div>" +
+      '<div class="t-h3" style="margin-bottom:10px">Salida laboral</div>' +
+      '<div class="stack-12">' +
+        c.salida.map(function (s) {
+          return '<div class="pg-bono"><span class="pg-bono-check">' + U.icono("check") + "</span>" +
+            '<div class="info"><div class="t-base-fuerte">' + U.esc(s) + "</div></div></div>";
+        }).join("") +
+      "</div>" +
+      '<div class="card-pendiente" style="margin-top:16px"><div class="encabezado">' + U.icono("alerta") + "Confirmá el plan vigente</div>" +
+        "<p class=\"t-chico\">Es un resumen para orientarte. El plan completo, las materias y la carga horaria " +
+        "los publica FADU en fadu.uba.ar/carreras.</p></div>" +
+      '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:16px">Cerrar</button>' +
       "</div>";
     overlayHost().appendChild(overlay);
     requestAnimationFrame(function () { overlay.classList.add("abierta"); });
@@ -567,11 +614,9 @@
         "Así no te marea todo junto desde el primer día.</span></div>" +
         '<div class="callout" style="margin-top:12px">' + U.icono("enlace") +
         '<span class="texto"><strong>No reemplaza al SIU Guaraní.</strong> Es tu mapa para seguir la carrera: ' +
-        "registrás lo que cursás y ves cómo vas. La inscripción oficial la seguís haciendo por el SIU.</span></div>" +
-        botonReiniciar(),
+        "registrás lo que cursás y ves cómo vas. La inscripción oficial la seguís haciendo por el SIU.</span></div>",
       nav: null
     });
-    cablearReiniciar();
   }
 
   /* ============================================================
@@ -586,8 +631,8 @@
 
     var muestra = D.CBC.materias.filter(function (m) { return m.enMuestra; });
     var otras   = D.CBC.materias.filter(function (m) { return !m.enMuestra; });
-    var filasMuestra = muestra.map(function (m) { return filaMateriaSeguimiento(m, "cbc"); }).join("");
-    var filasOtras   = otras.map(function (m) { return filaMateriaSeguimiento(m, "cbc"); }).join("");
+    var filasMuestra = muestra.map(function (m) { return filaMateriaSeguimiento(m, "cbc", { bloqueadaCorrel: !E.habilitada(m) }); }).join("");
+    var filasOtras   = otras.map(function (m) { return filaMateriaSeguimiento(m, "cbc", { bloqueadaCorrel: !E.habilitada(m) }); }).join("");
 
     var helper = cerrado ? "¡Aprobaste las 7! Ya podés empezar la carrera." :
                  aprob === 0 ? "Todavía no registraste ninguna. Es el momento." :
@@ -636,7 +681,8 @@
     var total = D.CARRERA.totalMaterias; // 33
     if (hito.tipo === "cierre-cbc") {
       return {
-        color: "--c-celeste", texto: "navy", circulo: "--c-navy", icono: "diploma",
+        color: "--c-celeste", tituloColor: "--c-navy",
+        ilustracion: "entraste-en-carrera.svg", iluHex: null,
         titulo: "Entraste<br>a la carrera",
         sub: "Cerraste el CBC. Desde hoy cursás en FADU y elegís cátedra, no comisión.",
         num: 7, chip: "CBC completo", helper: "Te faltan " + (total - 7) + " materias para recibirte.",
@@ -646,7 +692,8 @@
     }
     if (hito.tipo === "fin-carrera") {
       return {
-        color: "--c-azul", texto: "blanco", circulo: "--c-blanco", icono: "diploma", iconoColor: "--c-azul",
+        color: "--c-azul", tituloColor: "--c-azul",
+        ilustracion: "recibido.svg", iluHex: null,
         titulo: "Terminaste<br>de cursar",
         sub: "33 materias, 3 seminarios y 5 años. Ya no te queda nada por rendir: lo que sigue es el papel.",
         etapaCard: { num: 3, titulo: "Se abrió la etapa 3", sub: "Título y posgrado" },
@@ -654,10 +701,12 @@
         onCta: function () { E.graduarse(); go("titulo.html"); }
       };
     }
-    // pasaje-anio
+    // pasaje-anio. La ilustración "pasaste-de-año" se recolorea según el año:
+    // la ropa (violeta base #6B4EF0) toma el color del año que empezás.
     var destino = hito.hacia;
-    var acentos = { 2: "--c-violeta", 3: "--c-amarillo", 4: "--c-coral" };
-    var textos  = { 2: "blanco", 3: "navy", 4: "navy" };
+    var panel      = { 2: "--c-violeta", 3: "--c-amarillo",    4: "--c-naranja-fuerte" };
+    var tituloCols = { 2: "--c-violeta", 3: "--c-navy",        4: "--c-naranja-fuerte" };
+    var iluHexMap  = { 2: null,          3: "#FFC53D",         4: "#F97316" };
     var anioObj = D.CARRERA.anios[destino - 1];
     var acum = anioObj.baseAprobadas; // acumulado al empezar el año destino
     var subs = {
@@ -671,7 +720,8 @@
       4: "Te faltan " + (total - acum) + " unidades para terminar de cursar."
     };
     return {
-      color: acentos[destino], texto: textos[destino], circulo: "--c-navy", icono: "check",
+      color: panel[destino], tituloColor: tituloCols[destino],
+      ilustracion: "pasaste-de-año.svg", iluHex: iluHexMap[destino],
       titulo: "Empezaste<br>" + destino + "º año",
       sub: subs[destino],
       num: acum, chip: (destino - 1) + "º completo", helper: helpers[destino],
@@ -683,9 +733,8 @@
   function mostrarHito(hito) {
     var c = configHito(hito);
     var total = D.CARRERA.totalMaterias;
-    var iconoColor = c.iconoColor || c.color;
 
-    var tarjeta;
+    var tarjeta, pct = null;
     if (c.etapaCard) {
       tarjeta =
         '<div class="hito-card hito-card-etapa">' +
@@ -693,43 +742,59 @@
         '<div><div class="t-base-fuerte">' + U.esc(c.etapaCard.titulo) + "</div>" +
         '<div class="t-chico muted">' + U.esc(c.etapaCard.sub) + "</div></div></div>";
     } else {
-      var pct = Math.round((c.num / total) * 100);
+      pct = Math.round((c.num / total) * 100);
       tarjeta =
         '<div class="hito-card">' +
         '<div class="hito-card-top"><span class="t-h2">' + c.num + " de " + total + "</span>" +
         '<span class="chip chip-aprobada">' + U.esc(c.chip) + "</span></div>" +
         '<div class="barra" style="margin:14px 0 12px"><div class="relleno hito-fill" style="width:0"></div></div>' +
         '<p class="t-chico muted">' + U.esc(c.helper) + "</p></div>";
-      // anima la barra al valor real
-      setTimeout(function () {
-        var f = document.querySelector(".hito-fill");
-        if (f) f.style.width = pct + "%";
-      }, 350);
     }
 
     var esGraduacion = hito.tipo === "fin-carrera";
     var cel = document.createElement("div");
-    cel.className = "hito-pantalla texto-" + c.texto + (esGraduacion ? " hito-graduacion" : "");
+    cel.className = "hito-pantalla" + (esGraduacion ? " hito-graduacion" : "");
     cel.setAttribute("data-nav", "false");
-    cel.style.background = "var(" + c.color + ")";
+    cel.style.setProperty("--hito-color", "var(" + c.color + ")");
+    cel.style.setProperty("--hito-titulo", "var(" + c.tituloColor + ")");
     cel.innerHTML =
       (esGraduacion ? confetiHTML() : "") +
-      '<div class="hito-contenido">' +
-      '<span class="hito-icono" style="background:var(' + c.circulo + ');color:var(' + iconoColor + ')">' +
-        U.icono(c.icono) + "</span>" +
-      '<h1 class="t-display-l hito-titulo">' + c.titulo + "</h1>" +
-      '<p class="t-base-fuerte hito-sub">' + U.esc(c.sub) + "</p>" +
-      tarjeta +
+      '<div class="hito-top">' +
+        '<h1 class="t-display-l hito-titulo">' + c.titulo + "</h1>" +
+        '<p class="t-base-fuerte hito-sub">' + U.esc(c.sub) + "</p>" +
+        '<div class="hito-ilustracion"></div>' +
       "</div>" +
-      '<div class="cta-bar"><button class="btn btn-primario" id="hito-cta">' + U.esc(c.cta) + "</button></div>";
+      '<div class="hito-panel">' +
+        tarjeta +
+        '<button class="btn btn-primario hito-cta" id="hito-cta">' + U.esc(c.cta) + "</button>" +
+      "</div>";
     overlayHost().appendChild(cel);
+    cargarIlustracion(cel.querySelector(".hito-ilustracion"), c.ilustracion, c.iluHex);
     requestAnimationFrame(function () { cel.classList.add("entra"); });
+    if (pct !== null) setTimeout(function () {
+      var f = cel.querySelector(".hito-fill");
+      if (f) f.style.width = pct + "%";
+    }, 450);
     el("hito-cta").onclick = c.onCta;
+  }
+
+  /* Carga la ilustración del hito. Primero pone un <img> (funciona siempre,
+     también sobre file://); si puede, la inyecta inline para recolorear la
+     ropa según el año (reemplaza el violeta base por el color del año). */
+  function cargarIlustracion(holder, archivo, hex) {
+    if (!holder || !archivo) return;
+    var url = encodeURI("../img/" + archivo);
+    holder.innerHTML = '<img src="' + url + '" alt="">';
+    if (!window.fetch) return;
+    fetch(url).then(function (r) { return r.ok ? r.text() : Promise.reject(); }).then(function (svg) {
+      if (hex) svg = svg.replace(/#6b4ef0/gi, hex);
+      holder.innerHTML = svg;
+    }).catch(function () { /* queda el <img> */ });
   }
 
   /* Confeti de celebración (sólo al recibirse). Puro DOM + CSS. */
   function confetiHTML() {
-    var cols = ["--c-lima", "--c-violeta", "--c-amarillo", "--c-coral", "--c-celeste", "--c-blanco"];
+    var cols = ["--c-lima", "--c-violeta", "--c-amarillo", "--c-naranja-fuerte", "--c-celeste", "--c-blanco"];
     var piezas = "";
     for (var i = 0; i < 30; i++) {
       var col = cols[i % cols.length];
@@ -749,7 +814,7 @@
   function pageCBCMaterias() {
     pintarEtapa("cbc");
     var filas = D.CBC.materias.map(function (m) {
-      return filaMateriaSeguimiento(m, "cbc");
+      return filaMateriaSeguimiento(m, "cbc", { bloqueadaCorrel: !E.habilitada(m) });
     }).join("");
 
     U.montarApp(APP(), {
@@ -967,6 +1032,26 @@
     }
 
     /* ---------- c) Inscripta ---------- */
+    /* Aviso + CTA para deshacer una anotación mal hecha.
+       Aparece en todas las pantallas de seguimiento (anotada / cursando). */
+    function bloqueSacarSeguimiento() {
+      return '<div class="callout callout-lavanda" style="margin-top:20px">' + U.icono("info") +
+        '<span class="texto"><strong>¿Anotaste mal la materia que estás cursando?</strong> ' +
+        "No pasa nada: podés sacarla de tu seguimiento y volver a empezar.</span></div>" +
+        '<button class="btn btn-fantasma t-chico" id="sacar-seg" ' +
+        'style="min-height:40px;margin-top:10px;color:var(--c-coral)">Sacar del seguimiento</button>';
+    }
+    function cablearSacarSeguimiento() {
+      var b = el("sacar-seg");
+      if (!b) return;
+      b.onclick = function () {
+        if (confirm("¿Sacar esta materia de tu seguimiento? Se borra lo que registraste de ella.")) {
+          E.sacarSeguimiento(id);
+          go(etapa === "cbc" ? "cbc.html" : "carrera.html?anio=" + anio);
+        }
+      };
+    }
+
     function vistaInscripta() {
       var dm = E.datosMateria(id);
       var sel = dm.comision || dm.catedra || "—";
@@ -980,7 +1065,8 @@
           '<div class="t-chico muted">' + (etapa === "cbc" ? "Comisión" : "Cátedra") + ": " + U.esc(sel) + "</div></div></div>" +
           '<div class="card" style="margin-top:12px"><div class="t-h3">Lo que viene</div>' +
           '<p class="t-chico muted" style="margin-top:8px">Guardamos tu ' + (etapa === "cbc" ? "comisión" : "cátedra") +
-          ". Cuando arranques las clases, pasala a <strong>Cursando</strong> y registrá tus entregas y notas acá.</p></div>",
+          ". Cuando arranques las clases, pasala a <strong>Cursando</strong> y registrá tus entregas y notas acá.</p></div>" +
+          bloqueSacarSeguimiento(),
         cta: '<button class="btn btn-etapa" id="cursar">Empezar a cursar' + U.icono("flecha") + "</button>",
         nav: navCfg
       });
@@ -990,6 +1076,7 @@
         E.empezarCursada(id);
         go(etapa === "cbc" ? "cbc.html" : "carrera.html?anio=" + anio);
       };
+      cablearSacarSeguimiento();
     }
 
     /* ---------- d) Cursando ---------- */
@@ -1004,7 +1091,8 @@
           ev.instancias.map(function (i) { return parcialCard(i.titulo, i.estadoTxt, i.estadoCls); }).join("") +
           "</div>" +
           '<div class="callout" style="margin-top:16px">' + U.icono("info") +
-          '<span class="texto">' + ev.nota + "</span></div>",
+          '<span class="texto">' + ev.nota + "</span></div>" +
+          bloqueSacarSeguimiento(),
         cta:
           '<div class="row" style="gap:10px;margin-bottom:10px">' +
           '<button class="btn btn-etapa" id="aprobe" style="flex:1">La aprobé</button>' +
@@ -1013,6 +1101,7 @@
           '<button class="btn btn-fantasma t-chico" id="deje" style="min-height:40px">Dejé de cursar</button>',
         nav: navCfg
       });
+      cablearSacarSeguimiento();
       el("aprobe").onclick = function () {
         var destino = "materia.html?etapa=" + etapa + "&id=" + id;
         var hito = E.aprobar(id);
@@ -1417,10 +1506,10 @@
         '<div class="dato"><span class="k">Plan</span><span class="v">2022</span></div>' +
         catedra +
         "</div>" +
-        botonReiniciar(),
+        botonCerrarSesion(),
       nav: { etapa: navEtapa, activo: activo, anio: anio }
     });
-    cablearReiniciar();
+    cablearCerrarSesion();
   }
 
   function resumenProgreso(etiqueta, hechas, total) {
@@ -1681,11 +1770,9 @@
           '<div class="card-oscura" style="margin-top:20px;text-align:center">' +
           '<p class="t-base-fuerte" style="color:var(--c-blanco)">Gracias por recorrerlo con UBA+.</p>' +
           '<p class="t-chico" style="opacity:.8;margin-top:6px">Fue una herramienta de seguimiento: ' +
-          "el diploma lo firma la UBA.</p></div>" +
-          botonReiniciar(),
+          "el diploma lo firma la UBA.</p></div>",
         nav: { etapa: "graduado", activo: "inicio" }
       });
-      cablearReiniciar();
 
       function statCard(num, label) {
         return '<div class="cierre-stat"><div class="cierre-stat-num">' + num + "</div>" +
@@ -1982,14 +2069,16 @@
   /* ============================================================
      Reinicio de demo (compartido)
      ============================================================ */
-  function botonReiniciar() {
-    return '<button class="btn btn-fantasma t-chico" id="reiniciar" ' +
-      'style="min-height:40px;margin-top:24px;color:var(--c-n500)">Reiniciar progreso (demo)</button>';
+  function botonCerrarSesion() {
+    return '<button class="btn btn-fantasma t-chico" id="cerrar-sesion" ' +
+      'style="min-height:44px;margin-top:24px;color:var(--c-coral)">Cerrar sesión</button>';
   }
-  function cablearReiniciar() {
-    var b = el("reiniciar");
+  function cablearCerrarSesion() {
+    var b = el("cerrar-sesion");
     if (b) b.onclick = function () {
-      if (confirm("¿Reiniciar todo el progreso de la demo?")) { E.reiniciar(); go("../index.html"); }
+      if (confirm("¿Cerrar sesión? Vas a volver al inicio y se borra el progreso de esta cuenta.")) {
+        E.reiniciar(); go("../index.html");
+      }
     };
   }
 
@@ -2021,5 +2110,5 @@
     });
   });
 
-  window.APP_HELPERS = { qs: qs, go: go, pintarEtapa: pintarEtapa, botonReiniciar: botonReiniciar, cablearReiniciar: cablearReiniciar };
+  window.APP_HELPERS = { qs: qs, go: go, pintarEtapa: pintarEtapa, botonCerrarSesion: botonCerrarSesion, cablearCerrarSesion: cablearCerrarSesion };
 })();
