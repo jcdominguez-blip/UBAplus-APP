@@ -63,10 +63,15 @@
   /* ¿Está aprobada? */
   function aprobada(id) { return estadoMateria(id) === "aprobada"; }
 
-  /* Regla 1: una materia se habilita sólo si todas sus correlativas están aprobadas */
+  /* Regla 1: una materia se habilita sólo si cumple TODAS sus correlativas.
+     Cada correlativa es un id (hay que aprobarla) o un array de ids = grupo
+     "uno u otro" (alcanza con aprobar cualquiera; p. ej. ["m2","tip2"]). */
   function habilitada(materia) {
-    if (!materia.correlativas || materia.correlativas.length === 0) return true;
-    return materia.correlativas.every(aprobada);
+    var corr = materia.correlativas;
+    if (!corr || corr.length === 0) return true;
+    return corr.every(function (req) {
+      return Array.isArray(req) ? req.some(aprobada) : aprobada(req);
+    });
   }
 
   /* Regla 2: se cursan como máximo 4 materias por cuatrimestre.

@@ -529,10 +529,14 @@
     var lista = habilitadas.map(function (x) {
       var mm = x.materia;
       var anioTxt = x.anio ? (x.anio + "º año") : "la carrera";
-      // Correlativas que pedía (por código): ahora están todas cumplidas
-      var reqs = (mm.correlativas || []).map(function (cid) {
-        var info = D.buscarMateria(cid);
-        return info ? info.materia.codigo : cid.toUpperCase();
+      // Correlativas que pedía (por código): ahora están todas cumplidas.
+      // Un grupo "uno u otro" se muestra como "X o Y".
+      var reqs = (mm.correlativas || []).map(function (req) {
+        var ids = Array.isArray(req) ? req : [req];
+        return ids.map(function (cid) {
+          var info = D.buscarMateria(cid);
+          return info ? info.materia.codigo : cid.toUpperCase();
+        }).join(" o ");
       });
       var reqTxt = reqs.length
         ? '<div class="t-caption muted" style="margin-top:4px">Pedía: ' + U.esc(reqs.join(" · ")) + "</div>"

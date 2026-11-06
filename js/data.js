@@ -309,19 +309,28 @@
      Comunicación e Historia—). El `habilita` de cada materia se deriva solo,
      como la inversa, para que el aviso de "se habilitó" sea exacto.
      ============================================================ */
+  // Un item es un id (hay que aprobarlo) o un array = "uno u otro" (M2 ó TIP2).
+  // La demo no modela TEC1/TEC2 ni la electiva Fotografía/Ilustración: se mapean
+  // las cadenas que existen acá. ME1 del cuadro real se representa con "me2".
   var CORRELATIVAS_CARRERA = {
-    // 2º año: DG2 necesita las tres troncales de 1º (DG1, Morfología I, Tipografía I)
+    // --- 2º año (CFG): el núcleo troncal pide las tres de 1º ---
     dg2:  ["dg1", "m1", "tip1"],
-    tip2: ["tip1", "m1"],   // Tipografía II ← M1 y TIP1
-    m2:   ["m1"],           // Morfología II ← M1
-    c2:   ["c1"],           // Comunicación II ← C1
-    h2:   ["h1"],           // Historia II ← H1
-    // 3º año
-    dg3:  ["dg2", "tip2", "m2"],
+    tip2: ["dg1", "m1", "tip1"],       // TIP2 ← DG1·M1·TIP1 (igual que DG2)
+    m2:   ["m1", "tip1"],              // M2 ← M1·TIP1
+    c2:   ["c1"],
+    h2:   ["h1"],
+    // --- 3º año: DG2 + (M2 ó TIP2) + las teóricas de 1º ---
+    dg3:  ["dg2", ["m2", "tip2"], "c1", "h1"],
+    me2:  ["dg2", ["m2", "tip2"], "c1", "h1"],
+    leg:  ["dg2", ["m2", "tip2"], "c1", "h1", "h2", "c2"],   // LPP: lo de DG3 + H2 + C2
     c3:   ["c2"],
     h3:   ["h2"],
-    // 4º año
-    dg4:  ["dg3", "me2"]
+    // --- 4º año: ya no se puede deber M2 ni TIP2; suma teóricas de 2º ---
+    dg4:  ["dg3", "m2", "tip2", "me2", "h2", "c2"],
+    eo1:  ["dg3", "m2", "tip2", "me2", "h2", "c2"],   // Electivas de Formación Orientada: igual que DG4
+    eo2:  ["dg3", "m2", "tip2", "me2", "h2", "c2"],
+    opt1: ["dg2", ["m2", "tip2"], "me2"],             // Optativas/Seminarios
+    sem1: ["dg2", ["m2", "tip2"], "me2"]
   };
 
   (function aplicarCorrelativas() {
@@ -329,13 +338,20 @@
     CARRERA.anios.forEach(function (a) {
       a.materias.forEach(function (m) { porId[m.id] = m; m.correlativas = []; m.habilita = []; });
     });
-    Object.keys(CORRELATIVAS_CARRERA).forEach(function (destino) {
-      var reqs = CORRELATIVAS_CARRERA[destino];
-      if (!porId[destino]) return;
-      porId[destino].correlativas = reqs.slice();
-      reqs.forEach(function (req) {
-        if (porId[req] && porId[req].habilita.indexOf(destino) < 0) porId[req].habilita.push(destino);
+    // Las teóricas C1/H1/C2/H2 son parte del recorrido troncal (destraban las
+    // de arriba): pasan a contar como "muestra" para el avance de año.
+    ["c1", "h1", "c2", "h2"].forEach(function (id) { if (porId[id]) porId[id].enMuestra = true; });
+
+    function derivarHabilita(destino, req) {
+      (Array.isArray(req) ? req : [req]).forEach(function (reqId) {
+        if (porId[reqId] && porId[reqId].habilita.indexOf(destino) < 0) porId[reqId].habilita.push(destino);
       });
+    }
+    Object.keys(CORRELATIVAS_CARRERA).forEach(function (destino) {
+      if (!porId[destino]) return;
+      var reqs = CORRELATIVAS_CARRERA[destino];
+      porId[destino].correlativas = reqs.map(function (r) { return Array.isArray(r) ? r.slice() : r; });
+      reqs.forEach(function (r) { derivarHabilita(destino, r); });
     });
   })();
 
@@ -521,7 +537,7 @@
         [{ c: "C2", s: "ha" }, { c: "H2", s: "ha" }, { c: "TEC2", s: "ha" }],
         [null, { c: "DG3", s: "bl" }, null]
       ],
-      callout: { t: "Acá se traba por primera vez", x: "DG3 no se abre hasta que apruebes DG2. Por eso DG2 es la materia que ordena todo tu año." }
+      callout: { t: "Acá se traba por primera vez", x: "DG2 y TIP2 piden las tres de 1º juntas: DG1, M1 y TIP1. Y para DG3 vas a necesitar además M2 ó TIP2 y las teóricas C1 y H1." }
     },
     3: {
       acento: "amarillo",
@@ -531,7 +547,7 @@
         [{ c: "DG3", s: "cu" }, { c: "LEG", s: "cu" }, { c: "ME2", s: "ha" }],
         [null, { c: "DG4", s: "bl" }, null]
       ],
-      callout: { t: "Queda una sola traba", x: "DG4 espera a DG3. Todo lo demás de este año lo podés cursar en el orden que quieras." }
+      callout: { t: "La traba más exigente", x: "DG4 ya no perdona: pide DG3, M2, TIP2, Medios Expresivos y las teóricas de 2º (H2 y C2). Acá no podés deber casi nada." }
     },
     4: {
       acento: "coral",
