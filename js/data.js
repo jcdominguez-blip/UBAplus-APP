@@ -301,6 +301,45 @@
   };
 
   /* ============================================================
+     CORRELATIVIDADES REALES — Plan DG 2022 (cuadro oficial de FADU)
+     https://www.fadu.uba.ar/.../DG_Cuadro-de-correlatividades_PlanDG2022
+     Para CURSAR una materia hay que tener aprobadas/finales las de la lista.
+     Se mapea a las materias de la demo (el plan real tiene más asignaturas:
+     se conservan las cadenas que existen acá —DG, Morfología, Tipografía,
+     Comunicación e Historia—). El `habilita` de cada materia se deriva solo,
+     como la inversa, para que el aviso de "se habilitó" sea exacto.
+     ============================================================ */
+  var CORRELATIVAS_CARRERA = {
+    // 2º año: DG2 necesita las tres troncales de 1º (DG1, Morfología I, Tipografía I)
+    dg2:  ["dg1", "m1", "tip1"],
+    tip2: ["tip1", "m1"],   // Tipografía II ← M1 y TIP1
+    m2:   ["m1"],           // Morfología II ← M1
+    c2:   ["c1"],           // Comunicación II ← C1
+    h2:   ["h1"],           // Historia II ← H1
+    // 3º año
+    dg3:  ["dg2", "tip2", "m2"],
+    c3:   ["c2"],
+    h3:   ["h2"],
+    // 4º año
+    dg4:  ["dg3", "me2"]
+  };
+
+  (function aplicarCorrelativas() {
+    var porId = {};
+    CARRERA.anios.forEach(function (a) {
+      a.materias.forEach(function (m) { porId[m.id] = m; m.correlativas = []; m.habilita = []; });
+    });
+    Object.keys(CORRELATIVAS_CARRERA).forEach(function (destino) {
+      var reqs = CORRELATIVAS_CARRERA[destino];
+      if (!porId[destino]) return;
+      porId[destino].correlativas = reqs.slice();
+      reqs.forEach(function (req) {
+        if (porId[req] && porId[req].habilita.indexOf(destino) < 0) porId[req].habilita.push(destino);
+      });
+    });
+  })();
+
+  /* ============================================================
      DATOS INSTITUCIONALES VERIFICADOS (sección 7)
      ============================================================ */
   var FADU = {

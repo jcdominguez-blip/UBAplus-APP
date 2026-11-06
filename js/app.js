@@ -354,7 +354,13 @@
     }
     function cablearAtrasPaso() {
       var b = document.querySelector("[data-atras]");
-      if (b) b.onclick = function () { if (paso > 0) { paso--; pasos[paso](); } };
+      if (!b) return;
+      // Clonamos el botón para quitarle el handler global (history.back) que le
+      // puso montarApp: en el onboarding el "atrás" es sólo paso-a-paso y nunca
+      // debe salir al rótulo grupal.
+      var nb = b.cloneNode(true);
+      b.parentNode.replaceChild(nb, b);
+      nb.onclick = function () { if (paso > 0) { paso--; pasos[paso](); } };
     }
 
     splash();
@@ -523,10 +529,19 @@
     var lista = habilitadas.map(function (x) {
       var mm = x.materia;
       var anioTxt = x.anio ? (x.anio + "º año") : "la carrera";
+      // Correlativas que pedía (por código): ahora están todas cumplidas
+      var reqs = (mm.correlativas || []).map(function (cid) {
+        var info = D.buscarMateria(cid);
+        return info ? info.materia.codigo : cid.toUpperCase();
+      });
+      var reqTxt = reqs.length
+        ? '<div class="t-caption muted" style="margin-top:4px">Pedía: ' + U.esc(reqs.join(" · ")) + "</div>"
+        : "";
       return '<div class="noti-item" style="background:var(--c-pastel-celeste)">' +
         '<span class="noti-ic">' + U.icono("flecha") + "</span>" +
         '<div class="info"><div class="t-base-fuerte">' + U.esc(mm.nombre) + "</div>" +
-        '<div class="t-chico muted" style="margin-top:2px">Se habilitó · ' + U.esc(anioTxt) + "</div></div></div>";
+        '<div class="t-chico muted" style="margin-top:2px">Se habilitó · ' + U.esc(anioTxt) + "</div>" +
+        reqTxt + "</div></div>";
     }).join("");
 
     var overlay = document.createElement("div");
@@ -535,13 +550,13 @@
       '<div class="hoja" role="dialog" aria-label="Materia habilitada">' +
       '<div class="asa"></div>' +
       '<div class="popup-icono">' + U.icono("arbol") + "</div>" +
-      '<div class="t-h1" style="margin-bottom:6px">¡Desbloqueaste una materia!</div>' +
-      '<p class="t-chico muted" style="margin-bottom:16px">Al aprobar <strong>' + U.esc(materiaAprobada.nombre) +
-      "</strong> cumpliste la correlativa y se te habilitó:</p>" +
+      '<div class="t-h1" style="margin-bottom:6px">¡Cumpliste una correlativa!</div>' +
+      '<p class="t-chico muted" style="margin-bottom:16px">Con <strong>' + U.esc(materiaAprobada.nombre) +
+      "</strong> ya tenés aprobadas todas las correlativas de:</p>" +
       '<div class="stack-12">' + lista + "</div>" +
       '<div class="callout callout-lavanda" style="margin-top:16px">' + U.icono("info") +
-      '<span class="texto">La carrera <strong>no es lineal</strong>: a medida que cumplís correlativas podés ir ' +
-      "cursando materias de años distintos.</span></div>" +
+      '<span class="texto">La carrera <strong>no es lineal</strong>: una materia se habilita recién cuando ' +
+      "aprobás <strong>todas</strong> sus correlativas, aunque sean de años distintos.</span></div>" +
       '<button class="btn btn-primario" id="cerrar-hoja" style="margin-top:16px">Entendido</button>' +
       "</div>";
     overlayHost().appendChild(overlay);
@@ -721,7 +736,7 @@
     };
     return {
       color: panel[destino], tituloColor: tituloCols[destino],
-      ilustracion: "pasaste-de-año.svg", iluHex: iluHexMap[destino],
+      ilustracion: "pasaste-de-ano.svg", iluHex: iluHexMap[destino],
       titulo: "Empezaste<br>" + destino + "º año",
       sub: subs[destino],
       num: acum, chip: (destino - 1) + "º completo", helper: helpers[destino],

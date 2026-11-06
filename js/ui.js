@@ -5,6 +5,46 @@
 (function () {
   "use strict";
 
+  /* ---------------- Pila de navegación INTERNA de la app ----------------
+     Mantiene en sessionStorage la lista de pantallas de la app visitadas
+     en esta sesión. Sirve para que el botón "atrás" nunca salga del
+     prototipo hacia el rótulo grupal: si no hay pantalla previa DENTRO de
+     la app, se va a una pantalla base (recorrido.html) en vez de hacer
+     history.back() y escaparse. Se reinicia cada vez que se entra a la app
+     desde afuera (p. ej. desde el rótulo). */
+  var NAV_KEY = "tpNavStack";
+  (function mantenerPila() {
+    try {
+      var aqui = location.pathname + location.search;
+      var pila = JSON.parse(sessionStorage.getItem(NAV_KEY) || "[]");
+
+      var tipo = null;
+      try {
+        var navEntry = performance.getEntriesByType("navigation")[0];
+        if (navEntry) tipo = navEntry.type;
+      } catch (e) {}
+      if (tipo == null && performance.navigation) {
+        tipo = performance.navigation.type === 2 ? "back_forward" : "navigate";
+      }
+
+      var vieneDeLaApp = (document.referrer || "").indexOf("/tp/") !== -1;
+
+      if (tipo === "back_forward") {
+        pila.pop();
+      } else if (!vieneDeLaApp) {
+        // Entrada fresca a la app (desde el rótulo u otro sitio): pila nueva.
+        pila = [aqui];
+      } else if (pila[pila.length - 1] !== aqui) {
+        pila.push(aqui);
+      }
+
+      sessionStorage.setItem(NAV_KEY, JSON.stringify(pila));
+      window.__tpPila = pila;
+    } catch (e) {
+      window.__tpPila = null;
+    }
+  })();
+
   /* ---------------- Iconos (inline SVG, stroke currentColor) ---------------- */
   var ICONOS = {
     atras:    '<path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -224,12 +264,21 @@
     return app;
   }
 
-  /* Cablea todos los botones [data-atras] a history.back (regla 2) */
+  /* Cablea todos los botones [data-atras]. Vuelve con el historial SOLO si hay
+     una pantalla previa dentro de la propia app; si no, va a la pantalla base
+     para no salir del prototipo al rótulo grupal (regla 2). */
   function cablearAtras(root) {
     (root || document).querySelectorAll("[data-atras]").forEach(function (b) {
+      if (b.__atrasCableado) return;
+      b.__atrasCableado = true;
       b.addEventListener("click", function () {
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = "recorrido.html";
+        var pila = window.__tpPila;
+        var hayPreviaEnApp = pila ? pila.length > 1 : (document.referrer || "").indexOf("/tp/") !== -1;
+        if (hayPreviaEnApp && window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "recorrido.html";
+        }
       });
     });
   }

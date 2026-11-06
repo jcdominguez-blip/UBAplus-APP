@@ -11,17 +11,62 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="../css/tokens.css?v=14">
-  <link rel="stylesheet" href="../css/base.css?v=14">
-  <link rel="stylesheet" href="../css/layout.css?v=14">
-  <link rel="stylesheet" href="../css/components.css?v=14">
+  <link rel="stylesheet" href="../css/tokens.css?v=15">
+  <link rel="stylesheet" href="../css/base.css?v=15">
+  <link rel="stylesheet" href="../css/layout.css?v=15">
+  <link rel="stylesheet" href="../css/components.css?v=15">
+
+  <!-- Botón de retorno al rótulo grupal (autocontenido, no afecta al mockup) -->
+  <style>
+    .volver-rotulo {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 999;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: .01em;
+      color: #0B0D33;
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid rgba(11, 13, 51, .12);
+      border-radius: 100px;
+      box-shadow: 0 10px 24px -12px rgba(11, 13, 51, .45);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .volver-rotulo:hover {
+      background: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px -12px rgba(11, 13, 51, .5);
+    }
+    .volver-rotulo:active { transform: translateY(0); }
+    .volver-rotulo svg { width: 16px; height: 16px; }
+    @media (max-width: 480px) {
+      .volver-rotulo { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .volver-rotulo { transition: none; }
+    }
+  </style>
 </head>
 <body data-page="perfil" class="etapa-carrera">
+    <a class="volver-rotulo" href="../../index.html" aria-label="Volver al rótulo del Equipo VN12">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    <span>Volver al rótulo</span>
+  </a>
   <div id="app"></div>
 
-  <script src="../js/data.js?v=14"></script>
-  <script src="../js/estado.js?v=14"></script>
-  <script src="../js/ui.js?v=14"></script>
-  <script src="../js/app.js?v=14"></script>
+  <script src="../js/data.js?v=15"></script>
+  <script src="../js/estado.js?v=15"></script>
+  <script src="../js/ui.js?v=15"></script>
+  <script src="../js/app.js?v=15"></script>
 </body>
 </html>
