@@ -13,6 +13,11 @@
      history.back() y escaparse. Se reinicia cada vez que se entra a la app
      desde afuera (p. ej. desde el rótulo). */
   var NAV_KEY = "tpNavStack";
+  /* ¿La URL es del mismo sitio (mismo origen) que la pantalla actual? */
+  function mismoOrigen(url) {
+    if (!url) return false;
+    try { return new URL(url).origin === location.origin; } catch (e) { return false; }
+  }
   (function mantenerPila() {
     try {
       var aqui = location.pathname + location.search;
@@ -27,7 +32,9 @@
         tipo = performance.navigation.type === 2 ? "back_forward" : "navigate";
       }
 
-      var vieneDeLaApp = (document.referrer || "").indexOf("/tp/") !== -1;
+      // "Vengo de la app" = la pantalla anterior es del mismo sitio (mismo
+      // origen), sin importar la carpeta donde esté alojado (tp/, Pages, etc.).
+      var vieneDeLaApp = mismoOrigen(document.referrer);
 
       if (tipo === "back_forward") {
         pila.pop();
@@ -273,7 +280,7 @@
       b.__atrasCableado = true;
       b.addEventListener("click", function () {
         var pila = window.__tpPila;
-        var hayPreviaEnApp = pila ? pila.length > 1 : (document.referrer || "").indexOf("/tp/") !== -1;
+        var hayPreviaEnApp = pila ? pila.length > 1 : mismoOrigen(document.referrer);
         if (hayPreviaEnApp && window.history.length > 1) {
           window.history.back();
         } else {
