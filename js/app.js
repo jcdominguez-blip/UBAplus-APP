@@ -56,9 +56,9 @@
         titulo: "Trabajos prácticos",
         nota: "Es una materia de taller: no lleva parciales. Se promociona con las tres entregas; la carpeta y la asistencia cuentan.",
         instancias: [
-          { titulo: "TP1 · Inicio de cursada",        estadoTxt: "Entregado · 8", estadoCls: "aprobada" },
-          { titulo: "TP2 · Mitad de cursada",         estadoTxt: "En proceso",    estadoCls: "cursando" },
-          { titulo: "TP Final · Entrega integradora", estadoTxt: "Pendiente",     estadoCls: "no-inscripta" }
+          { key: "tp1", titulo: "TP1 · Inicio de cursada" },
+          { key: "tp2", titulo: "TP2 · Mitad de cursada" },
+          { key: "tpf", titulo: "TP Final · Entrega integradora" }
         ]
       };
     }
@@ -67,7 +67,7 @@
         titulo: "Evaluación",
         nota: "Se aprueba con un trabajo final, según la cátedra que elijas.",
         instancias: [
-          { titulo: "Trabajo final", estadoTxt: "Pendiente", estadoCls: "no-inscripta" }
+          { key: "tf", titulo: "Trabajo final" }
         ]
       };
     }
@@ -75,8 +75,8 @@
       titulo: "Parciales",
       nota: "Aprobás con 4 en cada parcial y promocionás con 7. Si desaprobás uno, hay recuperatorio.",
       instancias: [
-        { titulo: "1er parcial", estadoTxt: "Aprobado · 7", estadoCls: "aprobada" },
-        { titulo: "2do parcial", estadoTxt: "Pendiente",    estadoCls: "no-inscripta" }
+        { key: "p1", titulo: "1er parcial" },
+        { key: "p2", titulo: "2do parcial" }
       ]
     };
   }
@@ -1105,9 +1105,10 @@
         header: U.headerAtras(m.codigo),
         main:
           encabezadoMateria("cursando") +
-          '<div class="seccion-titulo"><h2>' + ev.titulo + "</h2></div>" +
+          '<div class="seccion-titulo"><h2>' + ev.titulo + "</h2>" +
+          '<span class="conteo">Cargá tu nota</span></div>' +
           '<div class="stack-12">' +
-          ev.instancias.map(function (i) { return parcialCard(i.titulo, i.estadoTxt, i.estadoCls); }).join("") +
+          ev.instancias.map(evalCard).join("") +
           "</div>" +
           '<div class="callout" style="margin-top:16px">' + U.icono("info") +
           '<span class="texto">' + ev.nota + "</span></div>" +
@@ -1121,6 +1122,7 @@
         nav: navCfg
       });
       cablearSacarSeguimiento();
+      cablearNotas();
       el("aprobe").onclick = function () {
         var destino = "materia.html?etapa=" + etapa + "&id=" + id;
         var hito = E.aprobar(id);
@@ -1209,11 +1211,44 @@
         '<div class="t-h1">' + U.esc(m.nombre) + "</div>" +
         '<div class="t-chico muted">' + U.esc(m.cursada + " · " + m.horas) + "</div></div>";
     }
-    function parcialCard(titulo, estadoTxt, estadoCls) {
-      return '<div class="fila-materia" style="box-shadow:none;background:var(--c-blanco)">' +
-        '<span class="codigo" data-estado="' + estadoCls + '">' + (estadoCls === "aprobada" ? U.icono("check") : "·") + "</span>" +
-        '<span class="info"><span class="nombre">' + titulo + "</span>" +
-        '<span class="meta">' + estadoTxt + "</span></span></div>";
+    /* Card de instancia de evaluación con input para que el alumno cargue
+       la nota (herramienta de seguimiento). Se guarda por materia. */
+    function evalCard(i) {
+      var nota = E.getNota(id, i.key);
+      var tiene = nota !== "";
+      return '<div class="eval-card" data-eval="' + i.key + '">' +
+        '<span class="glifo"' + (tiene ? ' data-estado="aprobada"' : "") + ">" +
+          U.icono(tiene ? "check" : "reloj") + "</span>" +
+        '<div class="eval-body"><span class="nombre">' + U.esc(i.titulo) + "</span>" +
+          '<div class="eval-nota-row">' +
+            '<input class="eval-input" type="text" inputmode="decimal" maxlength="4" placeholder="Nota" ' +
+              'aria-label="Nota de ' + U.esc(i.titulo) + '" value="' + U.esc(nota) + '" data-nota>' +
+            '<button class="eval-guardar" type="button" data-guardar>Guardar</button>' +
+          "</div></div></div>";
+    }
+
+    function cablearNotas() {
+      document.querySelectorAll(".eval-card").forEach(function (card) {
+        var clave = card.getAttribute("data-eval");
+        var input = card.querySelector("[data-nota]");
+        var btn = card.querySelector("[data-guardar]");
+        var glifo = card.querySelector(".glifo");
+        var timer;
+        function guardar() {
+          var val = E.setNota(id, clave, input.value);
+          input.value = val;
+          if (val !== "") { glifo.setAttribute("data-estado", "aprobada"); glifo.innerHTML = U.icono("check"); }
+          else { glifo.removeAttribute("data-estado"); glifo.innerHTML = U.icono("reloj"); }
+          btn.textContent = "Guardado";
+          btn.classList.add("ok");
+          clearTimeout(timer);
+          timer = setTimeout(function () { btn.textContent = "Guardar"; btn.classList.remove("ok"); }, 1500);
+        }
+        if (btn) btn.addEventListener("click", guardar);
+        if (input) input.addEventListener("blur", function () {
+          if (input.value.trim() !== E.getNota(id, clave)) guardar();
+        });
+      });
     }
     function cardHito(titulo, texto, botonTxt, onClick) {
       var htmlId = "hito-cta";

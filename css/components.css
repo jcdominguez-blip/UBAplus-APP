@@ -1443,3 +1443,60 @@
 @media (prefers-reduced-motion: reduce) {
   .switch-thumb { transition: none; }
 }
+
+/* ============================================================
+   20. CARDS DE EVALUACIÓN CON NOTA (pantalla cursando)
+   El alumno carga la nota de cada TP / parcial y la guarda.
+   ============================================================ */
+.eval-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-fila);
+  background: var(--c-blanco);
+  border: 1.5px solid var(--c-n200);
+}
+.eval-card .glifo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--c-n200);
+  color: var(--c-n600);
+}
+.eval-card .glifo svg { width: 20px; height: 20px; }
+.eval-body { flex: 1 1 auto; min-width: 0; }
+.eval-body .nombre { display: block; font-weight: 600; color: var(--c-navy); }
+.eval-nota-row { display: flex; gap: 8px; margin-top: 10px; }
+.eval-input {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--c-n300);
+  background: var(--c-n100);
+  font-family: var(--font-texto);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-navy);
+}
+.eval-input::placeholder { font-weight: 400; color: var(--c-n400); }
+.eval-input:focus { outline: none; border-color: var(--c-azul); background: var(--c-blanco); }
+.eval-guardar {
+  flex: 0 0 auto;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--c-navy);
+  color: var(--c-blanco);
+  font-family: var(--font-texto);
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.eval-guardar:active { opacity: 0.85; }
+.eval-guardar.ok { background: var(--c-lima); color: var(--c-navy); }

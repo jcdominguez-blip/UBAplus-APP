@@ -144,6 +144,23 @@
     if (estado.materias[id]) { delete estado.materias[id]; guardar(estado); }
   }
 
+  /* Nota que el usuario carga en cada instancia de evaluación (TP o parcial).
+     Se guarda por materia: estado.materias[id].notas = { tp1:"8", p1:"7", ... }.
+     Es una herramienta de seguimiento: la nota la pone el alumno. */
+  function setNota(id, clave, valor) {
+    var m = estado.materias[id] || (estado.materias[id] = { estado: "no-inscripta" });
+    if (!m.notas) m.notas = {};
+    valor = (valor == null ? "" : String(valor)).trim();
+    if (valor === "") delete m.notas[clave];
+    else m.notas[clave] = valor;
+    guardar(estado);
+    return valor;
+  }
+  function getNota(id, clave) {
+    var m = estado.materias[id];
+    return (m && m.notas && m.notas[clave]) || "";
+  }
+
   /* ---------------- Hitos y avance de etapa ---------------- */
 
   /* Materias de la muestra del CBC (las interactivas) */
@@ -326,6 +343,8 @@
     quedarLibre: quedarLibre,
     recursar: recursar,
     sacarSeguimiento: sacarSeguimiento,
+    setNota: setNota,
+    getNota: getNota,
     cerrarCBC: cerrarCBC,
     pasarAnio: pasarAnio,
     graduarse: graduarse,
