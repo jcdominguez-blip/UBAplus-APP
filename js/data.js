@@ -341,6 +341,11 @@
     // Las teóricas C1/H1/C2/H2 son parte del recorrido troncal (destraban las
     // de arriba): pasan a contar como "muestra" para el avance de año.
     ["c1", "h1", "c2", "h2"].forEach(function (id) { if (porId[id]) porId[id].enMuestra = true; });
+    // `troncal`: las materias "cabecera" del año (talleres/proyectuales). Sólo
+    // afecta el AGRUPADO visual del dashboard; las teóricas (enMuestra pero no
+    // troncal) van en su propio bloque pero siguen siendo obligatorias.
+    ["dg1", "tip1", "m1", "dg2", "tip2", "m2", "dg3", "me2", "leg", "dg4", "eo1", "eo2"]
+      .forEach(function (id) { if (porId[id]) porId[id].troncal = true; });
 
     function derivarHabilita(destino, req) {
       (Array.isArray(req) ? req : [req]).forEach(function (reqId) {

@@ -1260,8 +1260,14 @@
         bloqueadaCorrel: !E.habilitada(m)
       });
     };
-    var filasMuestra = anioObj.materias.filter(function (m) { return m.enMuestra; }).map(mkFila).join("");
-    var filasOtras   = anioObj.materias.filter(function (m) { return !m.enMuestra; }).map(mkFila).join("");
+    // Bloque 1: troncales (cabecera del año). Bloque 2: el resto.
+    var secundarias  = anioObj.materias.filter(function (m) { return !m.troncal; });
+    var filasMuestra = anioObj.materias.filter(function (m) { return m.troncal; }).map(mkFila).join("");
+    var filasOtras   = secundarias.map(mkFila).join("");
+    // Si las secundarias son obligatorias (teóricas que gatillan correlativas),
+    // el bloque se titula "Teóricas del año"; si son opcionales, "Otras materias".
+    var tituloOtras  = secundarias.some(function (m) { return m.enMuestra; })
+      ? "Teóricas del año" : "Otras materias del año";
 
     var pct = Math.round((aprobGlobal / D.CARRERA.totalMaterias) * 100);
     var helper = pct < 25 ? "Recién entraste. Las anuales troncales son las que marcan el año." :
@@ -1302,7 +1308,7 @@
         avisoTopeCar +
         '<div class="lista-materias">' + filasMuestra + "</div>" +
         (filasOtras
-          ? '<div class="t-etiqueta muted" style="margin:18px 0 8px">Otras materias del año</div>' +
+          ? '<div class="t-etiqueta muted" style="margin:18px 0 8px">' + tituloOtras + "</div>" +
             '<div class="lista-materias">' + filasOtras + "</div>"
           : "") +
         '<a href="arbol.html?anio=' + anio + '" class="btn btn-secundario" style="margin-top:16px">' +
